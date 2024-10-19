@@ -3,7 +3,7 @@ import { GameType } from "./type";
 export const dataGames: GameType[] = [
   {
     id: "1",
-    name: "Game 1",
+    name: "Game",
     price: 100000,
     description: "Game 1 description",
     date: "2021-01-01",

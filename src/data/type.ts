@@ -12,3 +12,14 @@ export type GameType = {
   publisher: string;
   tags: string[];
 };
+
+export type UserType = {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  region: string;
+  avatar: string;
+  createdAt: string;
+  updatedAt: string;
+};
