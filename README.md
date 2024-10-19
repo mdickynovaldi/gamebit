@@ -33,6 +33,11 @@ open http://localhost:3000
 | `/games`     | `POST`   | Create a game    |
 | `/games/:id` | `PUT`    | Update a game    |
 | `/games/:id` | `DELETE` | Delete a game    |
+| `/users`     | `GET`    | Get all users    |
+| `/users/:id` | `GET`    | Get a user by id |
+| `/users`     | `POST`   | Create a user    |
+| `/users/:id` | `PUT`    | Update a user    |
+| `/users/:id` | `DELETE` | Delete a user    |
 
 ### Error Handling
 
