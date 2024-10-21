@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { dataGames } from "./data/games";
 import { dataUsers } from "./data/users";
-import { UserType } from "./data/type";
+import { Game, User } from "./data/type";
+import { nanoid } from "nanoid";
 
 const app = new Hono();
 
@@ -9,15 +10,7 @@ app.get("/", (c) => {
   return c.json(
     {
       message: "Hello Everyone!",
-      endpoints: [
-        "/",
-        "/games",
-        "/games/:id",
-        "/users",
-        "/users/:id",
-        "/cart",
-        "/cart/:id",
-      ],
+      endpoints: ["/", "/games", "/users"],
     },
     200
   );
@@ -27,12 +20,14 @@ app.get("/games", (c) => {
   return c.json(dataGames, 200);
 });
 
-app.get("/games/:id", (c) => {
-  const id = c.req.param("id");
-  const game = dataGames.find((game) => game.id === id);
+app.get("/games/:slug", (c) => {
+  const slug = c.req.param("slug").replace(/-/g, " ");
+  const game = dataGames.find(
+    (game) => game.name.toLowerCase() === slug.toLowerCase()
+  );
 
   if (!game) {
-    return c.json({ message: "Game not found" }, 404);
+    return c.json({ message: "Game tidak ditemukan" }, 404);
   }
 
   return c.json(game, 200);
@@ -40,26 +35,48 @@ app.get("/games/:id", (c) => {
 
 app.post("/games", async (c) => {
   const newGame = await c.req.json();
+  const id = nanoid();
 
-  dataGames.push(newGame);
+  const gameWithId: Game = { ...newGame, id };
 
-  return c.json({ message: "Game added successfully", game: newGame }, 201);
+  dataGames.push(gameWithId);
+
+  return c.json(
+    { message: "Game berhasil ditambahkan", game: gameWithId },
+    201
+  );
 });
 
-app.put("/games/:id", async (c) => {
-  const id = c.req.param("id");
-  const updatedGame = await c.req.json();
-  const gameIndex = dataGames.findIndex((game) => game.id === id);
+app.put("/games/:slug", async (c) => {
+  const slug = c.req.param("slug").replace(/-/g, " ");
+  const updatedGameData = await c.req.json();
+  const gameIndex = dataGames.findIndex(
+    (game) => game.name.toLowerCase() === slug.toLowerCase()
+  );
+
+  if (gameIndex === -1) {
+    return c.json({ message: "Game tidak ditemukan" }, 404);
+  }
+
+  const updatedGame = {
+    ...dataGames[gameIndex],
+    ...updatedGameData,
+    id: dataGames[gameIndex].id,
+  };
+
   dataGames[gameIndex] = updatedGame;
+
   return c.json(
-    { message: "Game updated successfully", game: updatedGame },
+    { message: "Game berhasil diperbarui", game: updatedGame },
     200
   );
 });
 
-app.delete("/games/:id", (c) => {
-  const id = c.req.param("id");
-  const gameIndex = dataGames.findIndex((game) => game.id === id);
+app.delete("/games/:slug", (c) => {
+  const slug = c.req.param("slug").replace(/-/g, " ");
+  const gameIndex = dataGames.findIndex(
+    (game) => game.name.toLowerCase() === slug.toLowerCase()
+  );
 
   if (gameIndex === -1) {
     return c.json({ message: "Game not found" }, 404);
@@ -81,26 +98,29 @@ app.get("/users/:id", (c) => {
 
 app.post("/users", async (c) => {
   const newUser = await c.req.json();
+  const id = nanoid();
+  const userWithId = { ...newUser, id };
+
   const existingUser = dataUsers.find((user) => user.email === newUser.email);
 
   if (existingUser) {
     return c.json({ message: "User with this email already exists" }, 400);
   }
 
-  dataUsers.push(newUser);
-  return c.json({ message: "User added successfully", user: newUser }, 201);
+  dataUsers.push(userWithId);
+  return c.json({ message: "User added successfully", user: userWithId }, 201);
 });
 
 app.put("/users/:id", async (c) => {
   const id = c.req.param("id");
-  const updatedUserData: UserType = await c.req.json();
+  const updatedUserData: User = await c.req.json();
   const userIndex = dataUsers.findIndex((user) => user.id === id);
 
   if (userIndex === -1) {
     return c.json({ message: "User not found" }, 404);
   }
 
-  const updatedUser: UserType = {
+  const updatedUser: User = {
     ...dataUsers[userIndex],
     ...updatedUserData,
     id: dataUsers[userIndex].id,
