@@ -5,6 +5,8 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.4.1",
+    "date-fns": "^4.1.0",
     "hono": "^4.6.5",
     "nanoid": "^5.0.7"
   },

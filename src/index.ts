@@ -1,8 +1,11 @@
 import { Hono } from "hono";
-import { dataGames } from "./data/games";
-import { dataUsers } from "./data/users";
+import { dataGames, GameSchema } from "./data/games";
+import { dataUsers, UserSchema } from "./data/users";
 import { Game, User } from "./data/type";
 import { nanoid } from "nanoid";
+import { zValidator } from "@hono/zod-validator";
+import { format } from "date-fns";
+import { id as localeId } from "date-fns/locale";
 
 const app = new Hono();
 
@@ -17,7 +20,13 @@ app.get("/", (c) => {
 });
 
 app.get("/games", (c) => {
-  return c.json(dataGames, 200);
+  const formattedGames = dataGames.map((game) => ({
+    ...game,
+    releaseDate: format(new Date(game.releaseDate), "EEEE, d MMMM yyyy", {
+      locale: localeId,
+    }),
+  }));
+  return c.json(formattedGames, 200);
 });
 
 app.get("/games/:slug", (c) => {
@@ -33,41 +42,69 @@ app.get("/games/:slug", (c) => {
   return c.json(game, 200);
 });
 
-app.post("/games", async (c) => {
-  const newGame = await c.req.json();
-  const id = nanoid();
+app.post("/games", zValidator("json", GameSchema), (c) => {
+  try {
+    const id = nanoid();
+    const validatedGame = c.req.valid("json");
+    const currentDate = new Date().toISOString();
+    const gameWithId: Game = {
+      id,
+      ...validatedGame,
+      releaseDate: currentDate,
+    };
 
-  const gameWithId: Game = { ...newGame, id };
+    dataGames.push(gameWithId);
 
-  dataGames.push(gameWithId);
+    const formattedGame = {
+      ...gameWithId,
+      releaseDate: format(
+        new Date(gameWithId.releaseDate),
+        "EEEE, d MMMM yyyy",
+        {
+          locale: localeId,
+        }
+      ),
+    };
 
-  return c.json(
-    { message: "Game berhasil ditambahkan", game: gameWithId },
-    201
-  );
+    return c.json(
+      { message: "Game berhasil ditambahkan", game: formattedGame },
+      201
+    );
+  } catch (error) {
+    return c.json({ message: "Gagal menambahkan game", error: error }, 400);
+  }
 });
 
-app.put("/games/:slug", async (c) => {
+app.put("/games/edit/:slug", (c) => {
   const slug = c.req.param("slug").replace(/-/g, " ");
-  const updatedGameData = await c.req.json();
-  const gameIndex = dataGames.findIndex(
+  const updatedGameData = c.req.json();
+  const currentDate = new Date().toISOString();
+  const gameIndex = dataGames.find(
     (game) => game.name.toLowerCase() === slug.toLowerCase()
   );
 
-  if (gameIndex === -1) {
+  if (!gameIndex) {
     return c.json({ message: "Game tidak ditemukan" }, 404);
   }
 
   const updatedGame = {
-    ...dataGames[gameIndex],
     ...updatedGameData,
-    id: dataGames[gameIndex].id,
+    updatedAt: currentDate,
   };
 
-  dataGames[gameIndex] = updatedGame;
+  const formattedGame = {
+    ...updatedGame,
+    updatedAt: format(
+      new Date(updatedGame.updatedAt),
+      "EEEE, d MMMM yyyy | HH:mm:ss",
+      {
+        locale: localeId,
+      }
+    ),
+  };
 
   return c.json(
-    { message: "Game berhasil diperbarui", game: updatedGame },
+    { message: "Game berhasil diperbarui", game: formattedGame },
     200
   );
 });
@@ -87,7 +124,16 @@ app.delete("/games/:slug", (c) => {
 });
 
 app.get("/users", (c) => {
-  return c.json(dataUsers, 200);
+  const formattedUsers = dataUsers.map((user) => ({
+    ...user,
+    createdAt: format(new Date(user.createdAt), "EEEE, d MMMM yyyy", {
+      locale: localeId,
+    }),
+    updatedAt: format(new Date(user.updatedAt), "EEEE, d MMMM yyyy", {
+      locale: localeId,
+    }),
+  }));
+  return c.json(formattedUsers, 200);
 });
 
 app.get("/users/:id", (c) => {
@@ -96,40 +142,79 @@ app.get("/users/:id", (c) => {
   return c.json(user, 200);
 });
 
-app.post("/users", async (c) => {
-  const newUser = await c.req.json();
+app.post("/users", zValidator("json", UserSchema), async (c) => {
   const id = nanoid();
-  const userWithId = { ...newUser, id };
+  const validatedUser = c.req.valid("json");
+  const currentDate = new Date().toISOString();
+  const userWithId: User = {
+    id,
+    ...validatedUser,
+    createdAt: currentDate,
+    updatedAt: currentDate,
+  };
 
-  const existingUser = dataUsers.find((user) => user.email === newUser.email);
+  const existingUser = dataUsers.find(
+    (user) => user.email === validatedUser.email
+  );
 
   if (existingUser) {
     return c.json({ message: "User with this email already exists" }, 400);
   }
 
   dataUsers.push(userWithId);
-  return c.json({ message: "User added successfully", user: userWithId }, 201);
+
+  const formattedUser = {
+    ...userWithId,
+    createdAt: format(
+      new Date(userWithId.createdAt),
+      "EEEE, d MMMM yyyy | HH:mm:ss",
+      {
+        locale: localeId,
+      }
+    ),
+    updatedAt: format(
+      new Date(userWithId.updatedAt),
+      "EEEE, d MMMM yyyy | HH:mm:ss",
+      {
+        locale: localeId,
+      }
+    ),
+  };
+
+  return c.json(
+    { message: "User added successfully", user: formattedUser },
+    201
+  );
 });
 
-app.put("/users/:id", async (c) => {
+app.put("/users/edit/:id", zValidator("json", UserSchema), (c) => {
   const id = c.req.param("id");
-  const updatedUserData: User = await c.req.json();
-  const userIndex = dataUsers.findIndex((user) => user.id === id);
+  const updatedUserData = c.req.valid("json");
+  const currentDate = new Date().toISOString();
+  const userIndex = dataUsers.find((user) => user.id === id);
 
-  if (userIndex === -1) {
+  if (!userIndex) {
     return c.json({ message: "User not found" }, 404);
   }
 
-  const updatedUser: User = {
-    ...dataUsers[userIndex],
+  const updatedUser = {
     ...updatedUserData,
-    id: dataUsers[userIndex].id,
+    updatedAt: currentDate,
   };
 
-  dataUsers[userIndex] = updatedUser;
+  const formattedUser = {
+    ...updatedUser,
+    updatedAt: format(
+      new Date(updatedUser.updatedAt),
+      "EEEE, d MMMM yyyy | HH:mm:ss",
+      {
+        locale: localeId,
+      }
+    ),
+  };
 
   return c.json(
-    { message: "User updated successfully", user: updatedUser },
+    { message: "User updated successfully", user: formattedUser },
     200
   );
 });

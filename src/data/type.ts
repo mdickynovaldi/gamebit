@@ -3,7 +3,7 @@ export type Game = {
   name: string;
   price: number;
   description: string;
-  date: string;
+  releaseDate: string;
   imageUrl: string;
   category: string;
   platform: string;
@@ -17,7 +17,6 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  password: string;
   region: string;
   avatar: string;
   createdAt: string;
