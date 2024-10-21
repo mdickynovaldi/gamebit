@@ -1,13 +1,13 @@
-import { GameType } from "./type";
+import { Game } from "./type";
 
-export const dataGames: GameType[] = [
+export const dataGames: Game[] = [
   {
     id: "1",
     name: "Game",
     price: 100000,
     description: "Game 1 description",
     date: "2021-01-01",
-    image: "https://example.com/game1.jpg",
+    imageUrl: "https://example.com/game1.jpg",
     category: "Action",
     platform: "PC",
     rating: 4.5,
@@ -21,7 +21,7 @@ export const dataGames: GameType[] = [
     price: 400000,
     description: "Game 2 description",
     date: "2021-01-02",
-    image: "https://example.com/game2.jpg",
+    imageUrl: "https://example.com/game2.jpg",
     category: "Action",
     platform: "PC",
     rating: 4.5,
@@ -35,7 +35,7 @@ export const dataGames: GameType[] = [
     price: 900000,
     description: "Game 3 description",
     date: "2021-01-03",
-    image: "https://example.com/game3.jpg",
+    imageUrl: "https://example.com/game3.jpg",
     category: "Action",
     platform: "PC",
     rating: 4.5,

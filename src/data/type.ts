@@ -1,10 +1,10 @@
-export type GameType = {
+export type Game = {
   id: string;
   name: string;
   price: number;
   description: string;
   date: string;
-  image: string;
+  imageUrl: string;
   category: string;
   platform: string;
   rating: number;
@@ -13,7 +13,7 @@ export type GameType = {
   tags: string[];
 };
 
-export type UserType = {
+export type User = {
   id: string;
   name: string;
   email: string;
