@@ -1,5 +1,5 @@
 export type Game = {
-  id: string;
+  id?: string;
   name: string;
   price: number;
   description: string;
@@ -11,6 +11,7 @@ export type Game = {
   developer: string;
   publisher: string;
   tags: string[];
+  updatedAt: string;
 };
 
 export type User = {

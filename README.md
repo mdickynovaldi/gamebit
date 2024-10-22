@@ -26,6 +26,8 @@ open http://localhost:3000
 
 ## API Specification
 
+### Games
+
 | Endpoint     | Method   | Description      |
 | ------------ | -------- | ---------------- |
 | `/games`     | `GET`    | Get all games    |
@@ -33,11 +35,16 @@ open http://localhost:3000
 | `/games`     | `POST`   | Create a game    |
 | `/games/:id` | `PUT`    | Update a game    |
 | `/games/:id` | `DELETE` | Delete a game    |
-| `/users`     | `GET`    | Get all users    |
-| `/users/:id` | `GET`    | Get a user by id |
-| `/users`     | `POST`   | Create a user    |
-| `/users/:id` | `PUT`    | Update a user    |
-| `/users/:id` | `DELETE` | Delete a user    |
+
+### Users
+
+| Endpoint     | Method   | Description           |
+| ------------ | -------- | --------------------- |
+| `/users`     | `GET`    | Retrieve all users    |
+| `/users/:id` | `GET`    | Retrieve a user by id |
+| `/users`     | `POST`   | Create a new user     |
+| `/users/:id` | `PUT`    | Update user data      |
+| `/users/:id` | `DELETE` | Remove a user         |
 
 ### Error Handling
 

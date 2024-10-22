@@ -14,21 +14,21 @@ export const UserSchema = z.object({
 
 export const dataUsers: User[] = [
   {
-    id: "1",
-    name: "John Doe",
-    email: "john@doe.com",
-    region: "Indonesia",
+    id: "fsdafjhlhkjlhkfasd",
+    name: "Elon Musk",
+    email: "elon@musk.com",
+    region: "Canada",
     avatar: "https://example.com/avatar.jpg",
     createdAt: "2021-01-01",
     updatedAt: "2021-01-01",
   },
   {
-    id: "2",
-    name: "Jane Doe",
-    email: "jane@doe.com",
+    id: "fdgioewiiiwerd",
+    name: "Aldi",
+    email: "aldi@gmail.com",
     region: "Indonesia",
     avatar: "https://example.com/avatar.jpg",
-    createdAt: "2021-01-01",
+    createdAt: "2000-02-20",
     updatedAt: "2021-01-01",
   },
 ];

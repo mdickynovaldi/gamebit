@@ -12,7 +12,7 @@ const app = new Hono();
 app.get("/", (c) => {
   return c.json(
     {
-      message: "Hello Everyone!",
+      message: "GameBit API",
       endpoints: ["/", "/games", "/users"],
     },
     200
@@ -50,6 +50,7 @@ app.post("/games", zValidator("json", GameSchema), (c) => {
     const gameWithId: Game = {
       id,
       ...validatedGame,
+      updatedAt: currentDate,
       releaseDate: currentDate,
     };
 
@@ -75,36 +76,30 @@ app.post("/games", zValidator("json", GameSchema), (c) => {
   }
 });
 
-app.put("/games/edit/:slug", (c) => {
+app.put("/games/edit/:slug", zValidator("json", GameSchema), (c) => {
   const slug = c.req.param("slug").replace(/-/g, " ");
-  const updatedGameData = c.req.json();
+  const updatedGameData = c.req.valid("json");
   const currentDate = new Date().toISOString();
-  const gameIndex = dataGames.find(
+  const gameIndex = dataGames.findIndex(
     (game) => game.name.toLowerCase() === slug.toLowerCase()
   );
 
-  if (!gameIndex) {
+  if (gameIndex === -1) {
     return c.json({ message: "Game tidak ditemukan" }, 404);
   }
 
   const updatedGame = {
+    ...dataGames[gameIndex],
     ...updatedGameData,
-    updatedAt: currentDate,
+    updatedAt: format(new Date(currentDate), "EEEE, d MMMM yyyy | HH:mm:ss", {
+      locale: localeId,
+    }),
   };
 
-  const formattedGame = {
-    ...updatedGame,
-    updatedAt: format(
-      new Date(updatedGame.updatedAt),
-      "EEEE, d MMMM yyyy | HH:mm:ss",
-      {
-        locale: localeId,
-      }
-    ),
-  };
+  dataGames.splice(gameIndex, 1, updatedGame);
 
   return c.json(
-    { message: "Game berhasil diperbarui", game: formattedGame },
+    { message: "Game berhasil diperbarui", game: updatedGame },
     200
   );
 });
@@ -191,26 +186,25 @@ app.put("/users/edit/:id", zValidator("json", UserSchema), (c) => {
   const id = c.req.param("id");
   const updatedUserData = c.req.valid("json");
   const currentDate = new Date().toISOString();
-  const userIndex = dataUsers.find((user) => user.id === id);
+  const userIndex = dataUsers.findIndex((user) => user.id === id);
 
-  if (!userIndex) {
+  if (userIndex === -1) {
     return c.json({ message: "User not found" }, 404);
   }
 
   const updatedUser = {
+    ...dataUsers[userIndex],
     ...updatedUserData,
     updatedAt: currentDate,
   };
 
+  dataUsers.splice(userIndex, 1, updatedUser);
+
   const formattedUser = {
     ...updatedUser,
-    updatedAt: format(
-      new Date(updatedUser.updatedAt),
-      "EEEE, d MMMM yyyy | HH:mm:ss",
-      {
-        locale: localeId,
-      }
-    ),
+    updatedAt: format(new Date(currentDate), "EEEE, d MMMM yyyy | HH:mm:ss", {
+      locale: localeId,
+    }),
   };
 
   return c.json(
