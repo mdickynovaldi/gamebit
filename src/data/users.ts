@@ -1,5 +1,3 @@
-import { User } from "./type";
-
 import { z } from "zod";
 
 export const UserSchema = z.object({
@@ -8,9 +6,11 @@ export const UserSchema = z.object({
   email: z.string().email(),
   region: z.string().max(100),
   avatar: z.string().url(),
-  createdAt: z.string().datetime().optional(),
-  updatedAt: z.string().datetime().optional(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
 });
+
+export type User = z.infer<typeof UserSchema>;
 
 export const dataUsers: User[] = [
   {
@@ -19,8 +19,8 @@ export const dataUsers: User[] = [
     email: "elon@musk.com",
     region: "Canada",
     avatar: "https://example.com/avatar.jpg",
-    createdAt: "2021-01-01",
-    updatedAt: "2021-01-01",
+    createdAt: new Date("2021-01-01"),
+    updatedAt: new Date("2021-01-01"),
   },
   {
     id: "fdgioewiiiwerd",
@@ -28,7 +28,7 @@ export const dataUsers: User[] = [
     email: "aldi@gmail.com",
     region: "Indonesia",
     avatar: "https://example.com/avatar.jpg",
-    createdAt: "2000-02-20",
-    updatedAt: "2021-01-01",
+    createdAt: new Date("2000-02-20"),
+    updatedAt: new Date("2021-01-01"),
   },
 ];
