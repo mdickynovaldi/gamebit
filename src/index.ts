@@ -68,11 +68,11 @@ app.post("/games", zValidator("json", GameSchema), (c) => {
     };
 
     return c.json(
-      { message: "Game berhasil ditambahkan", game: formattedGame },
+      { message: "Game successfully added", game: formattedGame },
       201
     );
   } catch (error) {
-    return c.json({ message: "Gagal menambahkan game", error: error }, 400);
+    return c.json({ message: "Failed to add game", error: error }, 400);
   }
 });
 
@@ -85,7 +85,7 @@ app.put("/games/edit/:slug", zValidator("json", GameSchema), (c) => {
   );
 
   if (gameIndex === -1) {
-    return c.json({ message: "Game tidak ditemukan" }, 404);
+    return c.json({ message: "Game not found" }, 404);
   }
 
   const updatedGame = {
@@ -99,7 +99,7 @@ app.put("/games/edit/:slug", zValidator("json", GameSchema), (c) => {
   dataGames.splice(gameIndex, 1, updatedGame);
 
   return c.json(
-    { message: "Game berhasil diperbarui", game: updatedGame },
+    { message: "Game successfully updated", game: updatedGame },
     200
   );
 });
