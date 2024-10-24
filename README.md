@@ -44,3 +44,4 @@ The API returns standard HTTP error codes for invalid requests. Common errors in
 - 401 Unauthorized: Missing or invalid API key.
 - 404 Not Found: Game not found.
 - 500 Internal Server Error: Something went wrong on the server.
+  a
