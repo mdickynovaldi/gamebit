@@ -36,16 +36,6 @@ open http://localhost:3000
 | `/games/:id` | `PUT`    | Update a game    |
 | `/games/:id` | `DELETE` | Delete a game    |
 
-### Users
-
-| Endpoint     | Method   | Description           |
-| ------------ | -------- | --------------------- |
-| `/users`     | `GET`    | Retrieve all users    |
-| `/users/:id` | `GET`    | Retrieve a user by id |
-| `/users`     | `POST`   | Create a new user     |
-| `/users/:id` | `PUT`    | Update user data      |
-| `/users/:id` | `DELETE` | Remove a user         |
-
 ### Error Handling
 
 The API returns standard HTTP error codes for invalid requests. Common errors include:
