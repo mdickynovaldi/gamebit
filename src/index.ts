@@ -5,7 +5,6 @@ import {
   Game,
   GameSchema,
 } from "./data/games";
-import { dataUsers as dataUsersInitial, User, UserSchema } from "./data/users";
 import { nanoid } from "nanoid";
 import { zValidator } from "@hono/zod-validator";
 import { format } from "date-fns";
@@ -15,7 +14,6 @@ import slugify from "slugify";
 const app = new Hono();
 
 let dataGames = structuredClone(dataGamesInitial);
-let dataUsers = structuredClone(dataUsersInitial);
 
 app.get("/", (c) => {
   return c.json(
@@ -116,90 +114,6 @@ app.delete("/games/:slug", (c) => {
 
   dataGames.splice(gameIndex, 1);
   return c.json({ message: "Game deleted successfully" }, 200);
-});
-
-app.get("/users", (c) => {
-  return c.json(dataUsers, 200);
-});
-
-app.get("/users/:id", (c) => {
-  const id = c.req.param("id");
-  const user = dataUsers.find((user) => user.id === id);
-  return c.json(user, 200);
-});
-
-app.post("/users", zValidator("json", UserSchema), async (c) => {
-  const userData = c.req.valid("json");
-
-  const newUser: User = {
-    ...userData,
-    id: nanoid(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const existingUser = dataUsers.find((user) => user.email === userData.email);
-
-  if (existingUser) {
-    return c.json({ message: "User with this email already exists" }, 400);
-  }
-
-  dataUsers.push(newUser);
-
-  const formattedUser = {
-    ...newUser,
-    createdAt: newUser.createdAt,
-    updatedAt: newUser.updatedAt,
-  };
-
-  return c.json(
-    { message: "User added successfully", user: formattedUser },
-    201
-  );
-});
-
-app.put("/users/edit/:id", zValidator("json", UserSchema), (c) => {
-  const id = c.req.param("id");
-  const updatedUserData = c.req.valid("json");
-  const currentDate = new Date().toISOString();
-  const userIndex = dataUsers.findIndex((user) => user.id === id);
-
-  if (userIndex === -1) {
-    return c.json({ message: "User not found" }, 404);
-  }
-
-  const updatedUser = {
-    ...dataUsers[userIndex],
-    ...updatedUserData,
-    updatedAt: currentDate,
-  };
-
-  // FIX: update using map function/method
-  // dataUsers.splice(userIndex, 1, updatedUser);
-
-  const formattedUser = {
-    ...updatedUser,
-    updatedAt: format(new Date(currentDate), "EEEE, d MMMM yyyy | HH:mm:ss", {
-      locale: localeId,
-    }),
-  };
-
-  return c.json(
-    { message: "User updated successfully", user: formattedUser },
-    200
-  );
-});
-
-app.delete("/users/:id", (c) => {
-  const id = c.req.param("id");
-  const userIndex = dataUsers.findIndex((user) => user.id === id);
-
-  if (userIndex === -1) {
-    return c.json({ message: "User not found" }, 404);
-  }
-
-  dataUsers.splice(userIndex, 1);
-  return c.json({ message: "User deleted successfully" }, 200);
 });
 
 export default app;
