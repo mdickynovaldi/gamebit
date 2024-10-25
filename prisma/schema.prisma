@@ -16,21 +16,52 @@ generator zod {
   output   = "./zod"  
 }
 
-
 model Game {
-  id          String   @id @default(cuid())
-  slug        String   @unique
+  id          String     @id @default(cuid())
+  slug        String     @unique
   name        String
-  price       Decimal  @db.Money
-  description String?  @db.VarChar(1000)
+  price       Decimal    @db.Money
+  description String?    @db.VarChar(1000)
   releaseDate DateTime
-  imageUrl    String?  @db.VarChar(255)
-  platforms   String[]
-  genres      String[]
+  imageUrl    String?    @db.VarChar(255)
   rating      Float    
-  developer   String?  @db.VarChar(100)
-  publisher   String?  @db.VarChar(100)
-  tags        String[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  platforms   Platform[]
+  genres      Genre[]
+  developer   Developer @relation(fields: [developerId], references: [id])
+  developerId String
+  publisher   Publisher @relation(fields: [publisherId], references: [id])
+  publisherId String
+  tags        Tag[]
+}
+
+model Platform {
+  id    String @id @default(cuid())
+  name  String @unique
+  games Game[]
+}
+
+model Genre {
+  id    String @id @default(cuid())
+  name  String @unique
+  games Game[]
+}
+
+model Developer {
+  id    String @id @default(cuid())
+  name  String @unique
+  games Game[]
+}
+
+model Publisher {
+  id    String @id @default(cuid())
+  name  String @unique
+  games Game[]
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  games Game[]
 }
