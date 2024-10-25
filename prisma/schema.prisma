@@ -14,7 +14,7 @@ generator dbml {
 
 generator zod {
   provider = "zod-prisma-types"
-  output   = "./zod"
+  output   = "./zod-prisma-types"
 }
 
 model Game {

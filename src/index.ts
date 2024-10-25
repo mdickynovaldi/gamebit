@@ -1,15 +1,7 @@
 import { Hono } from "hono";
-import {
-  CreateGame,
-  CreateGameSchema,
-  dataGames as dataGamesInitial,
-  Game,
-} from "../prisma/data/games";
-import { nanoid } from "nanoid";
 import { zValidator } from "@hono/zod-validator";
-import { format } from "date-fns";
-import { id as localeId } from "date-fns/locale";
-import slugify from "slugify";
+
+import { CreateGameSchema } from "../prisma/data/games";
 import { GameSchema } from "../prisma/zod";
 import { db } from "./db";
 
@@ -19,7 +11,7 @@ app.get("/", (c) => {
   return c.json(
     {
       message: "GameBit API",
-      endpoints: ["/", "/games", "/users"],
+      endpoints: ["/", "/games"],
     },
     200
   );

@@ -1,18 +1,12 @@
 import { z } from "zod";
 import Decimal from "decimal.js";
 
-import { GameSchema } from "../zod";
-
-export const CreateGameSchema = GameSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
+import { GameSchema, GameCreateInputSchema } from "../zod-prisma-types";
 
 export type Game = z.infer<typeof GameSchema>;
-export type CreateGame = z.infer<typeof CreateGameSchema>;
+export type GameCreateInput = z.infer<typeof GameCreateInputSchema>;
 
-export const dataGames: CreateGame[] = [
+export const dataGames: GameCreateInput[] = [
   {
     slug: "spider-man",
     name: "Spider Man",
@@ -22,11 +16,14 @@ export const dataGames: CreateGame[] = [
     releaseDate: new Date("2021-01-01"),
     imageUrl: "https://example.com/game1.jpg",
     rating: 4.5,
+    platforms: {
+      connect: [{ slug: "windows" }, { slug: "playstation-5" }],
+    },
     // Need to seed them first
+    // platforms: [],
     // developer: "Developer 1",
     // publisher: "Publisher 1",
     // category: "Action",
-    // platform: "PC",
     // tags: ["Action", "Adventure", "RPG"],
   },
   {
@@ -38,6 +35,9 @@ export const dataGames: CreateGame[] = [
     releaseDate: new Date("2021-01-02"),
     imageUrl: "https://example.com/game2.jpg",
     rating: 4.5,
+    platforms: {
+      connect: [{ slug: "playstation-4" }, { slug: "xbox-one" }],
+    },
     // category: "Action",
     // platform: "PC",
     // developer: "Developer 2",
