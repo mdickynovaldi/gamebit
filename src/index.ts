@@ -1,9 +1,8 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 
-import { CreateGameSchema } from "../prisma/data/games";
-import { GameSchema } from "../prisma/zod";
 import { db } from "./db";
+import { GameCreateInputSchema, GameSchema } from "../prisma/zod-prisma-types";
 
 const app = new Hono();
 
@@ -23,13 +22,13 @@ app.get("/games", async (c) => {
       createdAt: true,
       updatedAt: true,
     },
-    // include: {
-    //   developers: true,
-    //   publishers: true,
-    //   platforms: true,
-    //   genres: true,
-    //   tags: true,
-    // },
+    include: {
+      platforms: { omit: { id: true } },
+      genres: true,
+      tags: true,
+      developers: true,
+      publishers: true,
+    },
   });
 
   const modifiedGames = games.map((game) => ({
@@ -52,7 +51,7 @@ app.get("/games/:slug", async (c) => {
   return c.json(game);
 });
 
-app.post("/games", zValidator("json", CreateGameSchema), (c) => {
+app.post("/games", zValidator("json", GameCreateInputSchema), (c) => {
   return c.json({});
 });
 
