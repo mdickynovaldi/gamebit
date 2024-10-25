@@ -16,6 +16,22 @@ To install dependencies:
 bun install
 ```
 
+Migrate the database:
+
+```sh
+bun prisma migrate dev
+# or
+bun db:migrate
+```
+
+Migrate the database:
+
+```sh
+bun prisma db seed
+# or
+bun db:seed
+```
+
 To run:
 
 ```sh

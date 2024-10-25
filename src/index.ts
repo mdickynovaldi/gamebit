@@ -1,19 +1,19 @@
 import { Hono } from "hono";
 import {
+  CreateGame,
   CreateGameSchema,
   dataGames as dataGamesInitial,
   Game,
-  GameSchema,
-} from "./data/games";
+} from "../prisma/data/games";
 import { nanoid } from "nanoid";
 import { zValidator } from "@hono/zod-validator";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import slugify from "slugify";
+import { GameSchema } from "../prisma/zod";
+import { db } from "./db";
 
 const app = new Hono();
-
-let dataGames = structuredClone(dataGamesInitial);
 
 app.get("/", (c) => {
   return c.json(
@@ -25,95 +25,51 @@ app.get("/", (c) => {
   );
 });
 
-app.get("/games", (c) => {
-  const formattedGames = dataGames.map((game) => {
-    if (!game.releaseDate) {
-      return game;
-    }
-
-    const formatString = "EEEE, d MMMM yyyy";
-
-    return {
-      ...game,
-      releaseDates: [
-        {
-          lang: "en",
-          date: format(game.releaseDate, formatString),
-        },
-        {
-          lang: "id",
-          date: format(game.releaseDate, formatString, { locale: localeId }),
-        },
-      ],
-    };
+app.get("/games", async (c) => {
+  const games = await db.game.findMany({
+    omit: {
+      createdAt: true,
+      updatedAt: true,
+    },
+    // include: {
+    //   developers: true,
+    //   publishers: true,
+    //   platforms: true,
+    //   genres: true,
+    //   tags: true,
+    // },
   });
-  return c.json(formattedGames, 200);
+
+  const modifiedGames = games.map((game) => ({
+    ...game,
+    price: Number(game.price),
+  }));
+
+  return c.json(modifiedGames);
 });
 
-app.get("/games/:slug", (c) => {
-  const slug = c.req.param("slug").replace(/-/g, " ");
-  const game = dataGames.find(
-    (game) => game.name.toLowerCase() === slug.toLowerCase()
-  );
+app.get("/games/:slug", async (c) => {
+  const slug = c.req.param("slug");
 
-  if (!game) {
-    return c.json({ message: "Game tidak ditemukan" }, 404);
-  }
+  const game = await db.game.findUnique({
+    where: { slug: slug },
+  });
 
-  return c.json(game, 200);
+  if (!game) return c.json({ message: "Game tidak ditemukan" }, 404);
+
+  return c.json(game);
 });
 
 app.post("/games", zValidator("json", CreateGameSchema), (c) => {
-  try {
-    const gameData = c.req.valid("json");
-
-    const newGame: Game = {
-      ...gameData,
-      id: nanoid(),
-      slug: slugify(gameData.name),
-      releaseDate: new Date(gameData.releaseDate),
-      updatedAt: new Date(),
-    };
-
-    dataGames = [...dataGames, newGame];
-
-    return c.json({ message: "Game successfully added", game: newGame }, 201);
-  } catch (error) {
-    return c.json({ message: "Failed to add game", error: error }, 400);
-  }
+  return c.json({});
 });
 
 app.put("/games/edit/:slug", zValidator("json", GameSchema), (c) => {
-  const slug = c.req.param("slug");
-  const gameData = c.req.valid("json");
-
-  const updatedGame = {
-    ...gameData,
-    updatedAt: new Date(),
-  };
-
-  dataGames = dataGames.map((game) => {
-    return game.slug === slug ? updatedGame : game;
-  });
-
-  return c.json(
-    { message: "Game successfully updated", game: updatedGame },
-    200
-  );
+  return c.json({});
 });
 
 app.delete("/games/:slug", (c) => {
-  const slug = c.req.param("slug").replace(/-/g, " ");
-  const gameIndex = dataGames.findIndex(
-    (game) => game.name.toLowerCase() === slug.toLowerCase()
-  );
-
-  if (gameIndex === -1) {
-    return c.json({ message: "Game not found" }, 404);
-  }
-
-  dataGames.splice(gameIndex, 1);
-  return c.json({ message: "Game deleted successfully" }, 200);
+  return c.json({});
 });
 
 export default app;

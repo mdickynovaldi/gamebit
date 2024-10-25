@@ -2,12 +2,21 @@
   "name": "gamebit",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "start": "bun run src/index.ts"
+    "start": "bun run src/index.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:gen": "prisma generate",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "docker:up": "docker-compose up -d"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.1",
     "@prisma/client": "^5.21.1",
     "date-fns": "^4.1.0",
+    "decimal.js": "^10.4.3",
     "hono": "^4.6.5",
     "nanoid": "^5.0.7",
     "slugify": "^1.6.6",
@@ -16,6 +25,7 @@
   "devDependencies": {
     "@types/bun": "latest",
     "prisma": "^5.21.1",
-    "prisma-dbml-generator": "^0.12.0"
+    "prisma-dbml-generator": "^0.12.0",
+    "tsx": "^4.19.1"
   }
 }

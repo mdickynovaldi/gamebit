@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Prisma } from '@prisma/client';
+import Decimal from 'decimal.js';
 
 /////////////////////////////////////////
 // HELPER FUNCTIONS
@@ -33,17 +34,17 @@ export const isValidDecimalInput =
 
 export const TransactionIsolationLevelSchema = z.enum(['ReadUncommitted','ReadCommitted','RepeatableRead','Serializable']);
 
-export const GameScalarFieldEnumSchema = z.enum(['id','slug','name','price','description','releaseDate','imageUrl','rating','createdAt','updatedAt','developerId','publisherId']);
+export const GameScalarFieldEnumSchema = z.enum(['id','slug','name','price','description','releaseDate','imageUrl','rating','createdAt','updatedAt']);
 
-export const PlatformScalarFieldEnumSchema = z.enum(['id','name']);
+export const DeveloperScalarFieldEnumSchema = z.enum(['id','slug','name']);
 
-export const GenreScalarFieldEnumSchema = z.enum(['id','name']);
+export const PublisherScalarFieldEnumSchema = z.enum(['id','slug','name']);
 
-export const DeveloperScalarFieldEnumSchema = z.enum(['id','name']);
+export const PlatformScalarFieldEnumSchema = z.enum(['id','slug','name']);
 
-export const PublisherScalarFieldEnumSchema = z.enum(['id','name']);
+export const GenreScalarFieldEnumSchema = z.enum(['id','slug','name']);
 
-export const TagScalarFieldEnumSchema = z.enum(['id','name']);
+export const TagScalarFieldEnumSchema = z.enum(['id','slug','name']);
 
 export const SortOrderSchema = z.enum(['asc','desc']);
 
@@ -69,33 +70,9 @@ export const GameSchema = z.object({
   rating: z.number(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
-  developerId: z.string(),
-  publisherId: z.string(),
 })
 
 export type Game = z.infer<typeof GameSchema>
-
-/////////////////////////////////////////
-// PLATFORM SCHEMA
-/////////////////////////////////////////
-
-export const PlatformSchema = z.object({
-  id: z.string().cuid(),
-  name: z.string(),
-})
-
-export type Platform = z.infer<typeof PlatformSchema>
-
-/////////////////////////////////////////
-// GENRE SCHEMA
-/////////////////////////////////////////
-
-export const GenreSchema = z.object({
-  id: z.string().cuid(),
-  name: z.string(),
-})
-
-export type Genre = z.infer<typeof GenreSchema>
 
 /////////////////////////////////////////
 // DEVELOPER SCHEMA
@@ -103,6 +80,7 @@ export type Genre = z.infer<typeof GenreSchema>
 
 export const DeveloperSchema = z.object({
   id: z.string().cuid(),
+  slug: z.string(),
   name: z.string(),
 })
 
@@ -114,10 +92,35 @@ export type Developer = z.infer<typeof DeveloperSchema>
 
 export const PublisherSchema = z.object({
   id: z.string().cuid(),
+  slug: z.string(),
   name: z.string(),
 })
 
 export type Publisher = z.infer<typeof PublisherSchema>
+
+/////////////////////////////////////////
+// PLATFORM SCHEMA
+/////////////////////////////////////////
+
+export const PlatformSchema = z.object({
+  id: z.string().cuid(),
+  slug: z.string(),
+  name: z.string(),
+})
+
+export type Platform = z.infer<typeof PlatformSchema>
+
+/////////////////////////////////////////
+// GENRE SCHEMA
+/////////////////////////////////////////
+
+export const GenreSchema = z.object({
+  id: z.string().cuid(),
+  slug: z.string(),
+  name: z.string(),
+})
+
+export type Genre = z.infer<typeof GenreSchema>
 
 /////////////////////////////////////////
 // TAG SCHEMA
@@ -125,6 +128,7 @@ export type Publisher = z.infer<typeof PublisherSchema>
 
 export const TagSchema = z.object({
   id: z.string().cuid(),
+  slug: z.string(),
   name: z.string(),
 })
 
@@ -138,10 +142,10 @@ export type Tag = z.infer<typeof TagSchema>
 //------------------------------------------------------
 
 export const GameIncludeSchema: z.ZodType<Prisma.GameInclude> = z.object({
+  developers: z.union([z.boolean(),z.lazy(() => DeveloperFindManyArgsSchema)]).optional(),
+  publishers: z.union([z.boolean(),z.lazy(() => PublisherFindManyArgsSchema)]).optional(),
   platforms: z.union([z.boolean(),z.lazy(() => PlatformFindManyArgsSchema)]).optional(),
   genres: z.union([z.boolean(),z.lazy(() => GenreFindManyArgsSchema)]).optional(),
-  developer: z.union([z.boolean(),z.lazy(() => DeveloperArgsSchema)]).optional(),
-  publisher: z.union([z.boolean(),z.lazy(() => PublisherArgsSchema)]).optional(),
   tags: z.union([z.boolean(),z.lazy(() => TagFindManyArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => GameCountOutputTypeArgsSchema)]).optional(),
 }).strict()
@@ -156,6 +160,8 @@ export const GameCountOutputTypeArgsSchema: z.ZodType<Prisma.GameCountOutputType
 }).strict();
 
 export const GameCountOutputTypeSelectSchema: z.ZodType<Prisma.GameCountOutputTypeSelect> = z.object({
+  developers: z.boolean().optional(),
+  publishers: z.boolean().optional(),
   platforms: z.boolean().optional(),
   genres: z.boolean().optional(),
   tags: z.boolean().optional(),
@@ -172,70 +178,12 @@ export const GameSelectSchema: z.ZodType<Prisma.GameSelect> = z.object({
   rating: z.boolean().optional(),
   createdAt: z.boolean().optional(),
   updatedAt: z.boolean().optional(),
-  developerId: z.boolean().optional(),
-  publisherId: z.boolean().optional(),
+  developers: z.union([z.boolean(),z.lazy(() => DeveloperFindManyArgsSchema)]).optional(),
+  publishers: z.union([z.boolean(),z.lazy(() => PublisherFindManyArgsSchema)]).optional(),
   platforms: z.union([z.boolean(),z.lazy(() => PlatformFindManyArgsSchema)]).optional(),
   genres: z.union([z.boolean(),z.lazy(() => GenreFindManyArgsSchema)]).optional(),
-  developer: z.union([z.boolean(),z.lazy(() => DeveloperArgsSchema)]).optional(),
-  publisher: z.union([z.boolean(),z.lazy(() => PublisherArgsSchema)]).optional(),
   tags: z.union([z.boolean(),z.lazy(() => TagFindManyArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => GameCountOutputTypeArgsSchema)]).optional(),
-}).strict()
-
-// PLATFORM
-//------------------------------------------------------
-
-export const PlatformIncludeSchema: z.ZodType<Prisma.PlatformInclude> = z.object({
-  games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
-  _count: z.union([z.boolean(),z.lazy(() => PlatformCountOutputTypeArgsSchema)]).optional(),
-}).strict()
-
-export const PlatformArgsSchema: z.ZodType<Prisma.PlatformDefaultArgs> = z.object({
-  select: z.lazy(() => PlatformSelectSchema).optional(),
-  include: z.lazy(() => PlatformIncludeSchema).optional(),
-}).strict();
-
-export const PlatformCountOutputTypeArgsSchema: z.ZodType<Prisma.PlatformCountOutputTypeDefaultArgs> = z.object({
-  select: z.lazy(() => PlatformCountOutputTypeSelectSchema).nullish(),
-}).strict();
-
-export const PlatformCountOutputTypeSelectSchema: z.ZodType<Prisma.PlatformCountOutputTypeSelect> = z.object({
-  games: z.boolean().optional(),
-}).strict();
-
-export const PlatformSelectSchema: z.ZodType<Prisma.PlatformSelect> = z.object({
-  id: z.boolean().optional(),
-  name: z.boolean().optional(),
-  games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
-  _count: z.union([z.boolean(),z.lazy(() => PlatformCountOutputTypeArgsSchema)]).optional(),
-}).strict()
-
-// GENRE
-//------------------------------------------------------
-
-export const GenreIncludeSchema: z.ZodType<Prisma.GenreInclude> = z.object({
-  games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
-  _count: z.union([z.boolean(),z.lazy(() => GenreCountOutputTypeArgsSchema)]).optional(),
-}).strict()
-
-export const GenreArgsSchema: z.ZodType<Prisma.GenreDefaultArgs> = z.object({
-  select: z.lazy(() => GenreSelectSchema).optional(),
-  include: z.lazy(() => GenreIncludeSchema).optional(),
-}).strict();
-
-export const GenreCountOutputTypeArgsSchema: z.ZodType<Prisma.GenreCountOutputTypeDefaultArgs> = z.object({
-  select: z.lazy(() => GenreCountOutputTypeSelectSchema).nullish(),
-}).strict();
-
-export const GenreCountOutputTypeSelectSchema: z.ZodType<Prisma.GenreCountOutputTypeSelect> = z.object({
-  games: z.boolean().optional(),
-}).strict();
-
-export const GenreSelectSchema: z.ZodType<Prisma.GenreSelect> = z.object({
-  id: z.boolean().optional(),
-  name: z.boolean().optional(),
-  games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
-  _count: z.union([z.boolean(),z.lazy(() => GenreCountOutputTypeArgsSchema)]).optional(),
 }).strict()
 
 // DEVELOPER
@@ -261,6 +209,7 @@ export const DeveloperCountOutputTypeSelectSchema: z.ZodType<Prisma.DeveloperCou
 
 export const DeveloperSelectSchema: z.ZodType<Prisma.DeveloperSelect> = z.object({
   id: z.boolean().optional(),
+  slug: z.boolean().optional(),
   name: z.boolean().optional(),
   games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => DeveloperCountOutputTypeArgsSchema)]).optional(),
@@ -289,9 +238,68 @@ export const PublisherCountOutputTypeSelectSchema: z.ZodType<Prisma.PublisherCou
 
 export const PublisherSelectSchema: z.ZodType<Prisma.PublisherSelect> = z.object({
   id: z.boolean().optional(),
+  slug: z.boolean().optional(),
   name: z.boolean().optional(),
   games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => PublisherCountOutputTypeArgsSchema)]).optional(),
+}).strict()
+
+// PLATFORM
+//------------------------------------------------------
+
+export const PlatformIncludeSchema: z.ZodType<Prisma.PlatformInclude> = z.object({
+  games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
+  _count: z.union([z.boolean(),z.lazy(() => PlatformCountOutputTypeArgsSchema)]).optional(),
+}).strict()
+
+export const PlatformArgsSchema: z.ZodType<Prisma.PlatformDefaultArgs> = z.object({
+  select: z.lazy(() => PlatformSelectSchema).optional(),
+  include: z.lazy(() => PlatformIncludeSchema).optional(),
+}).strict();
+
+export const PlatformCountOutputTypeArgsSchema: z.ZodType<Prisma.PlatformCountOutputTypeDefaultArgs> = z.object({
+  select: z.lazy(() => PlatformCountOutputTypeSelectSchema).nullish(),
+}).strict();
+
+export const PlatformCountOutputTypeSelectSchema: z.ZodType<Prisma.PlatformCountOutputTypeSelect> = z.object({
+  games: z.boolean().optional(),
+}).strict();
+
+export const PlatformSelectSchema: z.ZodType<Prisma.PlatformSelect> = z.object({
+  id: z.boolean().optional(),
+  slug: z.boolean().optional(),
+  name: z.boolean().optional(),
+  games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
+  _count: z.union([z.boolean(),z.lazy(() => PlatformCountOutputTypeArgsSchema)]).optional(),
+}).strict()
+
+// GENRE
+//------------------------------------------------------
+
+export const GenreIncludeSchema: z.ZodType<Prisma.GenreInclude> = z.object({
+  games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
+  _count: z.union([z.boolean(),z.lazy(() => GenreCountOutputTypeArgsSchema)]).optional(),
+}).strict()
+
+export const GenreArgsSchema: z.ZodType<Prisma.GenreDefaultArgs> = z.object({
+  select: z.lazy(() => GenreSelectSchema).optional(),
+  include: z.lazy(() => GenreIncludeSchema).optional(),
+}).strict();
+
+export const GenreCountOutputTypeArgsSchema: z.ZodType<Prisma.GenreCountOutputTypeDefaultArgs> = z.object({
+  select: z.lazy(() => GenreCountOutputTypeSelectSchema).nullish(),
+}).strict();
+
+export const GenreCountOutputTypeSelectSchema: z.ZodType<Prisma.GenreCountOutputTypeSelect> = z.object({
+  games: z.boolean().optional(),
+}).strict();
+
+export const GenreSelectSchema: z.ZodType<Prisma.GenreSelect> = z.object({
+  id: z.boolean().optional(),
+  slug: z.boolean().optional(),
+  name: z.boolean().optional(),
+  games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
+  _count: z.union([z.boolean(),z.lazy(() => GenreCountOutputTypeArgsSchema)]).optional(),
 }).strict()
 
 // TAG
@@ -317,6 +325,7 @@ export const TagCountOutputTypeSelectSchema: z.ZodType<Prisma.TagCountOutputType
 
 export const TagSelectSchema: z.ZodType<Prisma.TagSelect> = z.object({
   id: z.boolean().optional(),
+  slug: z.boolean().optional(),
   name: z.boolean().optional(),
   games: z.union([z.boolean(),z.lazy(() => GameFindManyArgsSchema)]).optional(),
   _count: z.union([z.boolean(),z.lazy(() => TagCountOutputTypeArgsSchema)]).optional(),
@@ -334,19 +343,17 @@ export const GameWhereInputSchema: z.ZodType<Prisma.GameWhereInput> = z.object({
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  price: z.union([ z.lazy(() => DecimalFilterSchema),z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional(),
+  price: z.union([ z.lazy(() => DecimalFilterSchema),z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional(),
   description: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   releaseDate: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   imageUrl: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   rating: z.union([ z.lazy(() => FloatFilterSchema),z.number() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
-  developerId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  publisherId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  developers: z.lazy(() => DeveloperListRelationFilterSchema).optional(),
+  publishers: z.lazy(() => PublisherListRelationFilterSchema).optional(),
   platforms: z.lazy(() => PlatformListRelationFilterSchema).optional(),
   genres: z.lazy(() => GenreListRelationFilterSchema).optional(),
-  developer: z.union([ z.lazy(() => DeveloperRelationFilterSchema),z.lazy(() => DeveloperWhereInputSchema) ]).optional(),
-  publisher: z.union([ z.lazy(() => PublisherRelationFilterSchema),z.lazy(() => PublisherWhereInputSchema) ]).optional(),
   tags: z.lazy(() => TagListRelationFilterSchema).optional()
 }).strict();
 
@@ -361,12 +368,10 @@ export const GameOrderByWithRelationInputSchema: z.ZodType<Prisma.GameOrderByWit
   rating: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
-  developerId: z.lazy(() => SortOrderSchema).optional(),
-  publisherId: z.lazy(() => SortOrderSchema).optional(),
+  developers: z.lazy(() => DeveloperOrderByRelationAggregateInputSchema).optional(),
+  publishers: z.lazy(() => PublisherOrderByRelationAggregateInputSchema).optional(),
   platforms: z.lazy(() => PlatformOrderByRelationAggregateInputSchema).optional(),
   genres: z.lazy(() => GenreOrderByRelationAggregateInputSchema).optional(),
-  developer: z.lazy(() => DeveloperOrderByWithRelationInputSchema).optional(),
-  publisher: z.lazy(() => PublisherOrderByWithRelationInputSchema).optional(),
   tags: z.lazy(() => TagOrderByRelationAggregateInputSchema).optional()
 }).strict();
 
@@ -389,19 +394,17 @@ export const GameWhereUniqueInputSchema: z.ZodType<Prisma.GameWhereUniqueInput> 
   OR: z.lazy(() => GameWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => GameWhereInputSchema),z.lazy(() => GameWhereInputSchema).array() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  price: z.union([ z.lazy(() => DecimalFilterSchema),z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional(),
+  price: z.union([ z.lazy(() => DecimalFilterSchema),z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional(),
   description: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   releaseDate: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   imageUrl: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
   rating: z.union([ z.lazy(() => FloatFilterSchema),z.number() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
-  developerId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  publisherId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  developers: z.lazy(() => DeveloperListRelationFilterSchema).optional(),
+  publishers: z.lazy(() => PublisherListRelationFilterSchema).optional(),
   platforms: z.lazy(() => PlatformListRelationFilterSchema).optional(),
   genres: z.lazy(() => GenreListRelationFilterSchema).optional(),
-  developer: z.union([ z.lazy(() => DeveloperRelationFilterSchema),z.lazy(() => DeveloperWhereInputSchema) ]).optional(),
-  publisher: z.union([ z.lazy(() => PublisherRelationFilterSchema),z.lazy(() => PublisherWhereInputSchema) ]).optional(),
   tags: z.lazy(() => TagListRelationFilterSchema).optional()
 }).strict());
 
@@ -416,8 +419,6 @@ export const GameOrderByWithAggregationInputSchema: z.ZodType<Prisma.GameOrderBy
   rating: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
   updatedAt: z.lazy(() => SortOrderSchema).optional(),
-  developerId: z.lazy(() => SortOrderSchema).optional(),
-  publisherId: z.lazy(() => SortOrderSchema).optional(),
   _count: z.lazy(() => GameCountOrderByAggregateInputSchema).optional(),
   _avg: z.lazy(() => GameAvgOrderByAggregateInputSchema).optional(),
   _max: z.lazy(() => GameMaxOrderByAggregateInputSchema).optional(),
@@ -432,119 +433,13 @@ export const GameScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.GameScal
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   slug: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
-  price: z.union([ z.lazy(() => DecimalWithAggregatesFilterSchema),z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional(),
+  price: z.union([ z.lazy(() => DecimalWithAggregatesFilterSchema),z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional(),
   description: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
   releaseDate: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
   imageUrl: z.union([ z.lazy(() => StringNullableWithAggregatesFilterSchema),z.string() ]).optional().nullable(),
   rating: z.union([ z.lazy(() => FloatWithAggregatesFilterSchema),z.number() ]).optional(),
   createdAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
   updatedAt: z.union([ z.lazy(() => DateTimeWithAggregatesFilterSchema),z.coerce.date() ]).optional(),
-  developerId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
-  publisherId: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
-}).strict();
-
-export const PlatformWhereInputSchema: z.ZodType<Prisma.PlatformWhereInput> = z.object({
-  AND: z.union([ z.lazy(() => PlatformWhereInputSchema),z.lazy(() => PlatformWhereInputSchema).array() ]).optional(),
-  OR: z.lazy(() => PlatformWhereInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => PlatformWhereInputSchema),z.lazy(() => PlatformWhereInputSchema).array() ]).optional(),
-  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  games: z.lazy(() => GameListRelationFilterSchema).optional()
-}).strict();
-
-export const PlatformOrderByWithRelationInputSchema: z.ZodType<Prisma.PlatformOrderByWithRelationInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  name: z.lazy(() => SortOrderSchema).optional(),
-  games: z.lazy(() => GameOrderByRelationAggregateInputSchema).optional()
-}).strict();
-
-export const PlatformWhereUniqueInputSchema: z.ZodType<Prisma.PlatformWhereUniqueInput> = z.union([
-  z.object({
-    id: z.string().cuid(),
-    name: z.string()
-  }),
-  z.object({
-    id: z.string().cuid(),
-  }),
-  z.object({
-    name: z.string(),
-  }),
-])
-.and(z.object({
-  id: z.string().cuid().optional(),
-  name: z.string().optional(),
-  AND: z.union([ z.lazy(() => PlatformWhereInputSchema),z.lazy(() => PlatformWhereInputSchema).array() ]).optional(),
-  OR: z.lazy(() => PlatformWhereInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => PlatformWhereInputSchema),z.lazy(() => PlatformWhereInputSchema).array() ]).optional(),
-  games: z.lazy(() => GameListRelationFilterSchema).optional()
-}).strict());
-
-export const PlatformOrderByWithAggregationInputSchema: z.ZodType<Prisma.PlatformOrderByWithAggregationInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  name: z.lazy(() => SortOrderSchema).optional(),
-  _count: z.lazy(() => PlatformCountOrderByAggregateInputSchema).optional(),
-  _max: z.lazy(() => PlatformMaxOrderByAggregateInputSchema).optional(),
-  _min: z.lazy(() => PlatformMinOrderByAggregateInputSchema).optional()
-}).strict();
-
-export const PlatformScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.PlatformScalarWhereWithAggregatesInput> = z.object({
-  AND: z.union([ z.lazy(() => PlatformScalarWhereWithAggregatesInputSchema),z.lazy(() => PlatformScalarWhereWithAggregatesInputSchema).array() ]).optional(),
-  OR: z.lazy(() => PlatformScalarWhereWithAggregatesInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => PlatformScalarWhereWithAggregatesInputSchema),z.lazy(() => PlatformScalarWhereWithAggregatesInputSchema).array() ]).optional(),
-  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
-  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
-}).strict();
-
-export const GenreWhereInputSchema: z.ZodType<Prisma.GenreWhereInput> = z.object({
-  AND: z.union([ z.lazy(() => GenreWhereInputSchema),z.lazy(() => GenreWhereInputSchema).array() ]).optional(),
-  OR: z.lazy(() => GenreWhereInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => GenreWhereInputSchema),z.lazy(() => GenreWhereInputSchema).array() ]).optional(),
-  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  games: z.lazy(() => GameListRelationFilterSchema).optional()
-}).strict();
-
-export const GenreOrderByWithRelationInputSchema: z.ZodType<Prisma.GenreOrderByWithRelationInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  name: z.lazy(() => SortOrderSchema).optional(),
-  games: z.lazy(() => GameOrderByRelationAggregateInputSchema).optional()
-}).strict();
-
-export const GenreWhereUniqueInputSchema: z.ZodType<Prisma.GenreWhereUniqueInput> = z.union([
-  z.object({
-    id: z.string().cuid(),
-    name: z.string()
-  }),
-  z.object({
-    id: z.string().cuid(),
-  }),
-  z.object({
-    name: z.string(),
-  }),
-])
-.and(z.object({
-  id: z.string().cuid().optional(),
-  name: z.string().optional(),
-  AND: z.union([ z.lazy(() => GenreWhereInputSchema),z.lazy(() => GenreWhereInputSchema).array() ]).optional(),
-  OR: z.lazy(() => GenreWhereInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => GenreWhereInputSchema),z.lazy(() => GenreWhereInputSchema).array() ]).optional(),
-  games: z.lazy(() => GameListRelationFilterSchema).optional()
-}).strict());
-
-export const GenreOrderByWithAggregationInputSchema: z.ZodType<Prisma.GenreOrderByWithAggregationInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  name: z.lazy(() => SortOrderSchema).optional(),
-  _count: z.lazy(() => GenreCountOrderByAggregateInputSchema).optional(),
-  _max: z.lazy(() => GenreMaxOrderByAggregateInputSchema).optional(),
-  _min: z.lazy(() => GenreMinOrderByAggregateInputSchema).optional()
-}).strict();
-
-export const GenreScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.GenreScalarWhereWithAggregatesInput> = z.object({
-  AND: z.union([ z.lazy(() => GenreScalarWhereWithAggregatesInputSchema),z.lazy(() => GenreScalarWhereWithAggregatesInputSchema).array() ]).optional(),
-  OR: z.lazy(() => GenreScalarWhereWithAggregatesInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => GenreScalarWhereWithAggregatesInputSchema),z.lazy(() => GenreScalarWhereWithAggregatesInputSchema).array() ]).optional(),
-  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
-  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
 }).strict();
 
 export const DeveloperWhereInputSchema: z.ZodType<Prisma.DeveloperWhereInput> = z.object({
@@ -552,12 +447,14 @@ export const DeveloperWhereInputSchema: z.ZodType<Prisma.DeveloperWhereInput> = 
   OR: z.lazy(() => DeveloperWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => DeveloperWhereInputSchema),z.lazy(() => DeveloperWhereInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   games: z.lazy(() => GameListRelationFilterSchema).optional()
 }).strict();
 
 export const DeveloperOrderByWithRelationInputSchema: z.ZodType<Prisma.DeveloperOrderByWithRelationInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   games: z.lazy(() => GameOrderByRelationAggregateInputSchema).optional()
 }).strict();
@@ -565,26 +462,28 @@ export const DeveloperOrderByWithRelationInputSchema: z.ZodType<Prisma.Developer
 export const DeveloperWhereUniqueInputSchema: z.ZodType<Prisma.DeveloperWhereUniqueInput> = z.union([
   z.object({
     id: z.string().cuid(),
-    name: z.string()
+    slug: z.string()
   }),
   z.object({
     id: z.string().cuid(),
   }),
   z.object({
-    name: z.string(),
+    slug: z.string(),
   }),
 ])
 .and(z.object({
   id: z.string().cuid().optional(),
-  name: z.string().optional(),
+  slug: z.string().optional(),
   AND: z.union([ z.lazy(() => DeveloperWhereInputSchema),z.lazy(() => DeveloperWhereInputSchema).array() ]).optional(),
   OR: z.lazy(() => DeveloperWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => DeveloperWhereInputSchema),z.lazy(() => DeveloperWhereInputSchema).array() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   games: z.lazy(() => GameListRelationFilterSchema).optional()
 }).strict());
 
 export const DeveloperOrderByWithAggregationInputSchema: z.ZodType<Prisma.DeveloperOrderByWithAggregationInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   _count: z.lazy(() => DeveloperCountOrderByAggregateInputSchema).optional(),
   _max: z.lazy(() => DeveloperMaxOrderByAggregateInputSchema).optional(),
@@ -596,6 +495,7 @@ export const DeveloperScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Dev
   OR: z.lazy(() => DeveloperScalarWhereWithAggregatesInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => DeveloperScalarWhereWithAggregatesInputSchema),z.lazy(() => DeveloperScalarWhereWithAggregatesInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
 }).strict();
 
@@ -604,12 +504,14 @@ export const PublisherWhereInputSchema: z.ZodType<Prisma.PublisherWhereInput> = 
   OR: z.lazy(() => PublisherWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => PublisherWhereInputSchema),z.lazy(() => PublisherWhereInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   games: z.lazy(() => GameListRelationFilterSchema).optional()
 }).strict();
 
 export const PublisherOrderByWithRelationInputSchema: z.ZodType<Prisma.PublisherOrderByWithRelationInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   games: z.lazy(() => GameOrderByRelationAggregateInputSchema).optional()
 }).strict();
@@ -617,26 +519,28 @@ export const PublisherOrderByWithRelationInputSchema: z.ZodType<Prisma.Publisher
 export const PublisherWhereUniqueInputSchema: z.ZodType<Prisma.PublisherWhereUniqueInput> = z.union([
   z.object({
     id: z.string().cuid(),
-    name: z.string()
+    slug: z.string()
   }),
   z.object({
     id: z.string().cuid(),
   }),
   z.object({
-    name: z.string(),
+    slug: z.string(),
   }),
 ])
 .and(z.object({
   id: z.string().cuid().optional(),
-  name: z.string().optional(),
+  slug: z.string().optional(),
   AND: z.union([ z.lazy(() => PublisherWhereInputSchema),z.lazy(() => PublisherWhereInputSchema).array() ]).optional(),
   OR: z.lazy(() => PublisherWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => PublisherWhereInputSchema),z.lazy(() => PublisherWhereInputSchema).array() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   games: z.lazy(() => GameListRelationFilterSchema).optional()
 }).strict());
 
 export const PublisherOrderByWithAggregationInputSchema: z.ZodType<Prisma.PublisherOrderByWithAggregationInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   _count: z.lazy(() => PublisherCountOrderByAggregateInputSchema).optional(),
   _max: z.lazy(() => PublisherMaxOrderByAggregateInputSchema).optional(),
@@ -648,6 +552,121 @@ export const PublisherScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.Pub
   OR: z.lazy(() => PublisherScalarWhereWithAggregatesInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => PublisherScalarWhereWithAggregatesInputSchema),z.lazy(() => PublisherScalarWhereWithAggregatesInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+}).strict();
+
+export const PlatformWhereInputSchema: z.ZodType<Prisma.PlatformWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => PlatformWhereInputSchema),z.lazy(() => PlatformWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => PlatformWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => PlatformWhereInputSchema),z.lazy(() => PlatformWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  games: z.lazy(() => GameListRelationFilterSchema).optional()
+}).strict();
+
+export const PlatformOrderByWithRelationInputSchema: z.ZodType<Prisma.PlatformOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  games: z.lazy(() => GameOrderByRelationAggregateInputSchema).optional()
+}).strict();
+
+export const PlatformWhereUniqueInputSchema: z.ZodType<Prisma.PlatformWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string().cuid(),
+    slug: z.string()
+  }),
+  z.object({
+    id: z.string().cuid(),
+  }),
+  z.object({
+    slug: z.string(),
+  }),
+])
+.and(z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string().optional(),
+  AND: z.union([ z.lazy(() => PlatformWhereInputSchema),z.lazy(() => PlatformWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => PlatformWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => PlatformWhereInputSchema),z.lazy(() => PlatformWhereInputSchema).array() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  games: z.lazy(() => GameListRelationFilterSchema).optional()
+}).strict());
+
+export const PlatformOrderByWithAggregationInputSchema: z.ZodType<Prisma.PlatformOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => PlatformCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => PlatformMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => PlatformMinOrderByAggregateInputSchema).optional()
+}).strict();
+
+export const PlatformScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.PlatformScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => PlatformScalarWhereWithAggregatesInputSchema),z.lazy(() => PlatformScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => PlatformScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => PlatformScalarWhereWithAggregatesInputSchema),z.lazy(() => PlatformScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+}).strict();
+
+export const GenreWhereInputSchema: z.ZodType<Prisma.GenreWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => GenreWhereInputSchema),z.lazy(() => GenreWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => GenreWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => GenreWhereInputSchema),z.lazy(() => GenreWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  games: z.lazy(() => GameListRelationFilterSchema).optional()
+}).strict();
+
+export const GenreOrderByWithRelationInputSchema: z.ZodType<Prisma.GenreOrderByWithRelationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  games: z.lazy(() => GameOrderByRelationAggregateInputSchema).optional()
+}).strict();
+
+export const GenreWhereUniqueInputSchema: z.ZodType<Prisma.GenreWhereUniqueInput> = z.union([
+  z.object({
+    id: z.string().cuid(),
+    slug: z.string()
+  }),
+  z.object({
+    id: z.string().cuid(),
+  }),
+  z.object({
+    slug: z.string(),
+  }),
+])
+.and(z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string().optional(),
+  AND: z.union([ z.lazy(() => GenreWhereInputSchema),z.lazy(() => GenreWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => GenreWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => GenreWhereInputSchema),z.lazy(() => GenreWhereInputSchema).array() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  games: z.lazy(() => GameListRelationFilterSchema).optional()
+}).strict());
+
+export const GenreOrderByWithAggregationInputSchema: z.ZodType<Prisma.GenreOrderByWithAggregationInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional(),
+  _count: z.lazy(() => GenreCountOrderByAggregateInputSchema).optional(),
+  _max: z.lazy(() => GenreMaxOrderByAggregateInputSchema).optional(),
+  _min: z.lazy(() => GenreMinOrderByAggregateInputSchema).optional()
+}).strict();
+
+export const GenreScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.GenreScalarWhereWithAggregatesInput> = z.object({
+  AND: z.union([ z.lazy(() => GenreScalarWhereWithAggregatesInputSchema),z.lazy(() => GenreScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  OR: z.lazy(() => GenreScalarWhereWithAggregatesInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => GenreScalarWhereWithAggregatesInputSchema),z.lazy(() => GenreScalarWhereWithAggregatesInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
 }).strict();
 
@@ -656,12 +675,14 @@ export const TagWhereInputSchema: z.ZodType<Prisma.TagWhereInput> = z.object({
   OR: z.lazy(() => TagWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => TagWhereInputSchema),z.lazy(() => TagWhereInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   games: z.lazy(() => GameListRelationFilterSchema).optional()
 }).strict();
 
 export const TagOrderByWithRelationInputSchema: z.ZodType<Prisma.TagOrderByWithRelationInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   games: z.lazy(() => GameOrderByRelationAggregateInputSchema).optional()
 }).strict();
@@ -669,26 +690,28 @@ export const TagOrderByWithRelationInputSchema: z.ZodType<Prisma.TagOrderByWithR
 export const TagWhereUniqueInputSchema: z.ZodType<Prisma.TagWhereUniqueInput> = z.union([
   z.object({
     id: z.string().cuid(),
-    name: z.string()
+    slug: z.string()
   }),
   z.object({
     id: z.string().cuid(),
   }),
   z.object({
-    name: z.string(),
+    slug: z.string(),
   }),
 ])
 .and(z.object({
   id: z.string().cuid().optional(),
-  name: z.string().optional(),
+  slug: z.string().optional(),
   AND: z.union([ z.lazy(() => TagWhereInputSchema),z.lazy(() => TagWhereInputSchema).array() ]).optional(),
   OR: z.lazy(() => TagWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => TagWhereInputSchema),z.lazy(() => TagWhereInputSchema).array() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   games: z.lazy(() => GameListRelationFilterSchema).optional()
 }).strict());
 
 export const TagOrderByWithAggregationInputSchema: z.ZodType<Prisma.TagOrderByWithAggregationInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional(),
   _count: z.lazy(() => TagCountOrderByAggregateInputSchema).optional(),
   _max: z.lazy(() => TagMaxOrderByAggregateInputSchema).optional(),
@@ -700,6 +723,7 @@ export const TagScalarWhereWithAggregatesInputSchema: z.ZodType<Prisma.TagScalar
   OR: z.lazy(() => TagScalarWhereWithAggregatesInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => TagScalarWhereWithAggregatesInputSchema),z.lazy(() => TagScalarWhereWithAggregatesInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringWithAggregatesFilterSchema),z.string() ]).optional(),
 }).strict();
 
@@ -707,17 +731,17 @@ export const GameCreateInputSchema: z.ZodType<Prisma.GameCreateInput> = z.object
   id: z.string().cuid().optional(),
   slug: z.string(),
   name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
   description: z.string().optional().nullable(),
   releaseDate: z.coerce.date(),
   imageUrl: z.string().optional().nullable(),
   rating: z.number(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  developers: z.lazy(() => DeveloperCreateNestedManyWithoutGamesInputSchema).optional(),
+  publishers: z.lazy(() => PublisherCreateNestedManyWithoutGamesInputSchema).optional(),
   platforms: z.lazy(() => PlatformCreateNestedManyWithoutGamesInputSchema).optional(),
   genres: z.lazy(() => GenreCreateNestedManyWithoutGamesInputSchema).optional(),
-  developer: z.lazy(() => DeveloperCreateNestedOneWithoutGamesInputSchema),
-  publisher: z.lazy(() => PublisherCreateNestedOneWithoutGamesInputSchema),
   tags: z.lazy(() => TagCreateNestedManyWithoutGamesInputSchema).optional()
 }).strict();
 
@@ -725,15 +749,15 @@ export const GameUncheckedCreateInputSchema: z.ZodType<Prisma.GameUncheckedCreat
   id: z.string().cuid().optional(),
   slug: z.string(),
   name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
   description: z.string().optional().nullable(),
   releaseDate: z.coerce.date(),
   imageUrl: z.string().optional().nullable(),
   rating: z.number(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  developerId: z.string(),
-  publisherId: z.string(),
+  developers: z.lazy(() => DeveloperUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
   platforms: z.lazy(() => PlatformUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
   genres: z.lazy(() => GenreUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
   tags: z.lazy(() => TagUncheckedCreateNestedManyWithoutGamesInputSchema).optional()
@@ -743,17 +767,17 @@ export const GameUpdateInputSchema: z.ZodType<Prisma.GameUpdateInput> = z.object
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  developers: z.lazy(() => DeveloperUpdateManyWithoutGamesNestedInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUpdateManyWithoutGamesNestedInputSchema).optional(),
   platforms: z.lazy(() => PlatformUpdateManyWithoutGamesNestedInputSchema).optional(),
   genres: z.lazy(() => GenreUpdateManyWithoutGamesNestedInputSchema).optional(),
-  developer: z.lazy(() => DeveloperUpdateOneRequiredWithoutGamesNestedInputSchema).optional(),
-  publisher: z.lazy(() => PublisherUpdateOneRequiredWithoutGamesNestedInputSchema).optional(),
   tags: z.lazy(() => TagUpdateManyWithoutGamesNestedInputSchema).optional()
 }).strict();
 
@@ -761,15 +785,15 @@ export const GameUncheckedUpdateInputSchema: z.ZodType<Prisma.GameUncheckedUpdat
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  developerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  publisherId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  developers: z.lazy(() => DeveloperUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
   platforms: z.lazy(() => PlatformUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
   genres: z.lazy(() => GenreUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
   tags: z.lazy(() => TagUncheckedUpdateManyWithoutGamesNestedInputSchema).optional()
@@ -779,22 +803,20 @@ export const GameCreateManyInputSchema: z.ZodType<Prisma.GameCreateManyInput> = 
   id: z.string().cuid().optional(),
   slug: z.string(),
   name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
   description: z.string().optional().nullable(),
   releaseDate: z.coerce.date(),
   imageUrl: z.string().optional().nullable(),
   rating: z.number(),
   createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  developerId: z.string(),
-  publisherId: z.string()
+  updatedAt: z.coerce.date().optional()
 }).strict();
 
 export const GameUpdateManyMutationInputSchema: z.ZodType<Prisma.GameUpdateManyMutationInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
@@ -807,209 +829,242 @@ export const GameUncheckedUpdateManyInputSchema: z.ZodType<Prisma.GameUncheckedU
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  developerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  publisherId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const DeveloperCreateInputSchema: z.ZodType<Prisma.DeveloperCreateInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string(),
+  games: z.lazy(() => GameCreateNestedManyWithoutDevelopersInputSchema).optional()
+}).strict();
+
+export const DeveloperUncheckedCreateInputSchema: z.ZodType<Prisma.DeveloperUncheckedCreateInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string(),
+  games: z.lazy(() => GameUncheckedCreateNestedManyWithoutDevelopersInputSchema).optional()
+}).strict();
+
+export const DeveloperUpdateInputSchema: z.ZodType<Prisma.DeveloperUpdateInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  games: z.lazy(() => GameUpdateManyWithoutDevelopersNestedInputSchema).optional()
+}).strict();
+
+export const DeveloperUncheckedUpdateInputSchema: z.ZodType<Prisma.DeveloperUncheckedUpdateInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  games: z.lazy(() => GameUncheckedUpdateManyWithoutDevelopersNestedInputSchema).optional()
+}).strict();
+
+export const DeveloperCreateManyInputSchema: z.ZodType<Prisma.DeveloperCreateManyInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string()
+}).strict();
+
+export const DeveloperUpdateManyMutationInputSchema: z.ZodType<Prisma.DeveloperUpdateManyMutationInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const DeveloperUncheckedUpdateManyInputSchema: z.ZodType<Prisma.DeveloperUncheckedUpdateManyInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const PublisherCreateInputSchema: z.ZodType<Prisma.PublisherCreateInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string(),
+  games: z.lazy(() => GameCreateNestedManyWithoutPublishersInputSchema).optional()
+}).strict();
+
+export const PublisherUncheckedCreateInputSchema: z.ZodType<Prisma.PublisherUncheckedCreateInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string(),
+  games: z.lazy(() => GameUncheckedCreateNestedManyWithoutPublishersInputSchema).optional()
+}).strict();
+
+export const PublisherUpdateInputSchema: z.ZodType<Prisma.PublisherUpdateInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  games: z.lazy(() => GameUpdateManyWithoutPublishersNestedInputSchema).optional()
+}).strict();
+
+export const PublisherUncheckedUpdateInputSchema: z.ZodType<Prisma.PublisherUncheckedUpdateInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  games: z.lazy(() => GameUncheckedUpdateManyWithoutPublishersNestedInputSchema).optional()
+}).strict();
+
+export const PublisherCreateManyInputSchema: z.ZodType<Prisma.PublisherCreateManyInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string()
+}).strict();
+
+export const PublisherUpdateManyMutationInputSchema: z.ZodType<Prisma.PublisherUpdateManyMutationInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const PublisherUncheckedUpdateManyInputSchema: z.ZodType<Prisma.PublisherUncheckedUpdateManyInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const PlatformCreateInputSchema: z.ZodType<Prisma.PlatformCreateInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string(),
   games: z.lazy(() => GameCreateNestedManyWithoutPlatformsInputSchema).optional()
 }).strict();
 
 export const PlatformUncheckedCreateInputSchema: z.ZodType<Prisma.PlatformUncheckedCreateInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string(),
   games: z.lazy(() => GameUncheckedCreateNestedManyWithoutPlatformsInputSchema).optional()
 }).strict();
 
 export const PlatformUpdateInputSchema: z.ZodType<Prisma.PlatformUpdateInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   games: z.lazy(() => GameUpdateManyWithoutPlatformsNestedInputSchema).optional()
 }).strict();
 
 export const PlatformUncheckedUpdateInputSchema: z.ZodType<Prisma.PlatformUncheckedUpdateInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   games: z.lazy(() => GameUncheckedUpdateManyWithoutPlatformsNestedInputSchema).optional()
 }).strict();
 
 export const PlatformCreateManyInputSchema: z.ZodType<Prisma.PlatformCreateManyInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string()
 }).strict();
 
 export const PlatformUpdateManyMutationInputSchema: z.ZodType<Prisma.PlatformUpdateManyMutationInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const PlatformUncheckedUpdateManyInputSchema: z.ZodType<Prisma.PlatformUncheckedUpdateManyInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const GenreCreateInputSchema: z.ZodType<Prisma.GenreCreateInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string(),
   games: z.lazy(() => GameCreateNestedManyWithoutGenresInputSchema).optional()
 }).strict();
 
 export const GenreUncheckedCreateInputSchema: z.ZodType<Prisma.GenreUncheckedCreateInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string(),
   games: z.lazy(() => GameUncheckedCreateNestedManyWithoutGenresInputSchema).optional()
 }).strict();
 
 export const GenreUpdateInputSchema: z.ZodType<Prisma.GenreUpdateInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   games: z.lazy(() => GameUpdateManyWithoutGenresNestedInputSchema).optional()
 }).strict();
 
 export const GenreUncheckedUpdateInputSchema: z.ZodType<Prisma.GenreUncheckedUpdateInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   games: z.lazy(() => GameUncheckedUpdateManyWithoutGenresNestedInputSchema).optional()
 }).strict();
 
 export const GenreCreateManyInputSchema: z.ZodType<Prisma.GenreCreateManyInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string()
 }).strict();
 
 export const GenreUpdateManyMutationInputSchema: z.ZodType<Prisma.GenreUpdateManyMutationInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const GenreUncheckedUpdateManyInputSchema: z.ZodType<Prisma.GenreUncheckedUpdateManyInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const DeveloperCreateInputSchema: z.ZodType<Prisma.DeveloperCreateInput> = z.object({
-  id: z.string().cuid().optional(),
-  name: z.string(),
-  games: z.lazy(() => GameCreateNestedManyWithoutDeveloperInputSchema).optional()
-}).strict();
-
-export const DeveloperUncheckedCreateInputSchema: z.ZodType<Prisma.DeveloperUncheckedCreateInput> = z.object({
-  id: z.string().cuid().optional(),
-  name: z.string(),
-  games: z.lazy(() => GameUncheckedCreateNestedManyWithoutDeveloperInputSchema).optional()
-}).strict();
-
-export const DeveloperUpdateInputSchema: z.ZodType<Prisma.DeveloperUpdateInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  games: z.lazy(() => GameUpdateManyWithoutDeveloperNestedInputSchema).optional()
-}).strict();
-
-export const DeveloperUncheckedUpdateInputSchema: z.ZodType<Prisma.DeveloperUncheckedUpdateInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  games: z.lazy(() => GameUncheckedUpdateManyWithoutDeveloperNestedInputSchema).optional()
-}).strict();
-
-export const DeveloperCreateManyInputSchema: z.ZodType<Prisma.DeveloperCreateManyInput> = z.object({
-  id: z.string().cuid().optional(),
-  name: z.string()
-}).strict();
-
-export const DeveloperUpdateManyMutationInputSchema: z.ZodType<Prisma.DeveloperUpdateManyMutationInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const DeveloperUncheckedUpdateManyInputSchema: z.ZodType<Prisma.DeveloperUncheckedUpdateManyInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const PublisherCreateInputSchema: z.ZodType<Prisma.PublisherCreateInput> = z.object({
-  id: z.string().cuid().optional(),
-  name: z.string(),
-  games: z.lazy(() => GameCreateNestedManyWithoutPublisherInputSchema).optional()
-}).strict();
-
-export const PublisherUncheckedCreateInputSchema: z.ZodType<Prisma.PublisherUncheckedCreateInput> = z.object({
-  id: z.string().cuid().optional(),
-  name: z.string(),
-  games: z.lazy(() => GameUncheckedCreateNestedManyWithoutPublisherInputSchema).optional()
-}).strict();
-
-export const PublisherUpdateInputSchema: z.ZodType<Prisma.PublisherUpdateInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  games: z.lazy(() => GameUpdateManyWithoutPublisherNestedInputSchema).optional()
-}).strict();
-
-export const PublisherUncheckedUpdateInputSchema: z.ZodType<Prisma.PublisherUncheckedUpdateInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  games: z.lazy(() => GameUncheckedUpdateManyWithoutPublisherNestedInputSchema).optional()
-}).strict();
-
-export const PublisherCreateManyInputSchema: z.ZodType<Prisma.PublisherCreateManyInput> = z.object({
-  id: z.string().cuid().optional(),
-  name: z.string()
-}).strict();
-
-export const PublisherUpdateManyMutationInputSchema: z.ZodType<Prisma.PublisherUpdateManyMutationInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const PublisherUncheckedUpdateManyInputSchema: z.ZodType<Prisma.PublisherUncheckedUpdateManyInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const TagCreateInputSchema: z.ZodType<Prisma.TagCreateInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string(),
   games: z.lazy(() => GameCreateNestedManyWithoutTagsInputSchema).optional()
 }).strict();
 
 export const TagUncheckedCreateInputSchema: z.ZodType<Prisma.TagUncheckedCreateInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string(),
   games: z.lazy(() => GameUncheckedCreateNestedManyWithoutTagsInputSchema).optional()
 }).strict();
 
 export const TagUpdateInputSchema: z.ZodType<Prisma.TagUpdateInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   games: z.lazy(() => GameUpdateManyWithoutTagsNestedInputSchema).optional()
 }).strict();
 
 export const TagUncheckedUpdateInputSchema: z.ZodType<Prisma.TagUncheckedUpdateInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   games: z.lazy(() => GameUncheckedUpdateManyWithoutTagsNestedInputSchema).optional()
 }).strict();
 
 export const TagCreateManyInputSchema: z.ZodType<Prisma.TagCreateManyInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string()
 }).strict();
 
 export const TagUpdateManyMutationInputSchema: z.ZodType<Prisma.TagUpdateManyMutationInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const TagUncheckedUpdateManyInputSchema: z.ZodType<Prisma.TagUncheckedUpdateManyInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
@@ -1029,14 +1084,14 @@ export const StringFilterSchema: z.ZodType<Prisma.StringFilter> = z.object({
 }).strict();
 
 export const DecimalFilterSchema: z.ZodType<Prisma.DecimalFilter> = z.object({
-  equals: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  in: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
-  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
-  lt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  lte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  gt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  gte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalFilterSchema) ]).optional(),
+  equals: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  in: z.union([z.number().array(),z.string().array(),z.instanceof(Decimal).array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
+  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Decimal).array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
+  lt: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  lte: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gt: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gte: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalFilterSchema) ]).optional(),
 }).strict();
 
 export const StringNullableFilterSchema: z.ZodType<Prisma.StringNullableFilter> = z.object({
@@ -1076,6 +1131,18 @@ export const FloatFilterSchema: z.ZodType<Prisma.FloatFilter> = z.object({
   not: z.union([ z.number(),z.lazy(() => NestedFloatFilterSchema) ]).optional(),
 }).strict();
 
+export const DeveloperListRelationFilterSchema: z.ZodType<Prisma.DeveloperListRelationFilter> = z.object({
+  every: z.lazy(() => DeveloperWhereInputSchema).optional(),
+  some: z.lazy(() => DeveloperWhereInputSchema).optional(),
+  none: z.lazy(() => DeveloperWhereInputSchema).optional()
+}).strict();
+
+export const PublisherListRelationFilterSchema: z.ZodType<Prisma.PublisherListRelationFilter> = z.object({
+  every: z.lazy(() => PublisherWhereInputSchema).optional(),
+  some: z.lazy(() => PublisherWhereInputSchema).optional(),
+  none: z.lazy(() => PublisherWhereInputSchema).optional()
+}).strict();
+
 export const PlatformListRelationFilterSchema: z.ZodType<Prisma.PlatformListRelationFilter> = z.object({
   every: z.lazy(() => PlatformWhereInputSchema).optional(),
   some: z.lazy(() => PlatformWhereInputSchema).optional(),
@@ -1088,16 +1155,6 @@ export const GenreListRelationFilterSchema: z.ZodType<Prisma.GenreListRelationFi
   none: z.lazy(() => GenreWhereInputSchema).optional()
 }).strict();
 
-export const DeveloperRelationFilterSchema: z.ZodType<Prisma.DeveloperRelationFilter> = z.object({
-  is: z.lazy(() => DeveloperWhereInputSchema).optional(),
-  isNot: z.lazy(() => DeveloperWhereInputSchema).optional()
-}).strict();
-
-export const PublisherRelationFilterSchema: z.ZodType<Prisma.PublisherRelationFilter> = z.object({
-  is: z.lazy(() => PublisherWhereInputSchema).optional(),
-  isNot: z.lazy(() => PublisherWhereInputSchema).optional()
-}).strict();
-
 export const TagListRelationFilterSchema: z.ZodType<Prisma.TagListRelationFilter> = z.object({
   every: z.lazy(() => TagWhereInputSchema).optional(),
   some: z.lazy(() => TagWhereInputSchema).optional(),
@@ -1107,6 +1164,14 @@ export const TagListRelationFilterSchema: z.ZodType<Prisma.TagListRelationFilter
 export const SortOrderInputSchema: z.ZodType<Prisma.SortOrderInput> = z.object({
   sort: z.lazy(() => SortOrderSchema),
   nulls: z.lazy(() => NullsOrderSchema).optional()
+}).strict();
+
+export const DeveloperOrderByRelationAggregateInputSchema: z.ZodType<Prisma.DeveloperOrderByRelationAggregateInput> = z.object({
+  _count: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const PublisherOrderByRelationAggregateInputSchema: z.ZodType<Prisma.PublisherOrderByRelationAggregateInput> = z.object({
+  _count: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const PlatformOrderByRelationAggregateInputSchema: z.ZodType<Prisma.PlatformOrderByRelationAggregateInput> = z.object({
@@ -1131,9 +1196,7 @@ export const GameCountOrderByAggregateInputSchema: z.ZodType<Prisma.GameCountOrd
   imageUrl: z.lazy(() => SortOrderSchema).optional(),
   rating: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
-  updatedAt: z.lazy(() => SortOrderSchema).optional(),
-  developerId: z.lazy(() => SortOrderSchema).optional(),
-  publisherId: z.lazy(() => SortOrderSchema).optional()
+  updatedAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const GameAvgOrderByAggregateInputSchema: z.ZodType<Prisma.GameAvgOrderByAggregateInput> = z.object({
@@ -1151,9 +1214,7 @@ export const GameMaxOrderByAggregateInputSchema: z.ZodType<Prisma.GameMaxOrderBy
   imageUrl: z.lazy(() => SortOrderSchema).optional(),
   rating: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
-  updatedAt: z.lazy(() => SortOrderSchema).optional(),
-  developerId: z.lazy(() => SortOrderSchema).optional(),
-  publisherId: z.lazy(() => SortOrderSchema).optional()
+  updatedAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const GameMinOrderByAggregateInputSchema: z.ZodType<Prisma.GameMinOrderByAggregateInput> = z.object({
@@ -1166,9 +1227,7 @@ export const GameMinOrderByAggregateInputSchema: z.ZodType<Prisma.GameMinOrderBy
   imageUrl: z.lazy(() => SortOrderSchema).optional(),
   rating: z.lazy(() => SortOrderSchema).optional(),
   createdAt: z.lazy(() => SortOrderSchema).optional(),
-  updatedAt: z.lazy(() => SortOrderSchema).optional(),
-  developerId: z.lazy(() => SortOrderSchema).optional(),
-  publisherId: z.lazy(() => SortOrderSchema).optional()
+  updatedAt: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const GameSumOrderByAggregateInputSchema: z.ZodType<Prisma.GameSumOrderByAggregateInput> = z.object({
@@ -1195,14 +1254,14 @@ export const StringWithAggregatesFilterSchema: z.ZodType<Prisma.StringWithAggreg
 }).strict();
 
 export const DecimalWithAggregatesFilterSchema: z.ZodType<Prisma.DecimalWithAggregatesFilter> = z.object({
-  equals: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  in: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
-  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
-  lt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  lte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  gt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  gte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalWithAggregatesFilterSchema) ]).optional(),
+  equals: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  in: z.union([z.number().array(),z.string().array(),z.instanceof(Decimal).array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
+  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Decimal).array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
+  lt: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  lte: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gt: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gte: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalWithAggregatesFilterSchema) ]).optional(),
   _count: z.lazy(() => NestedIntFilterSchema).optional(),
   _avg: z.lazy(() => NestedDecimalFilterSchema).optional(),
   _sum: z.lazy(() => NestedDecimalFilterSchema).optional(),
@@ -1268,79 +1327,106 @@ export const GameOrderByRelationAggregateInputSchema: z.ZodType<Prisma.GameOrder
   _count: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
-export const PlatformCountOrderByAggregateInputSchema: z.ZodType<Prisma.PlatformCountOrderByAggregateInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  name: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
-export const PlatformMaxOrderByAggregateInputSchema: z.ZodType<Prisma.PlatformMaxOrderByAggregateInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  name: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
-export const PlatformMinOrderByAggregateInputSchema: z.ZodType<Prisma.PlatformMinOrderByAggregateInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  name: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
-export const GenreCountOrderByAggregateInputSchema: z.ZodType<Prisma.GenreCountOrderByAggregateInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  name: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
-export const GenreMaxOrderByAggregateInputSchema: z.ZodType<Prisma.GenreMaxOrderByAggregateInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  name: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
-export const GenreMinOrderByAggregateInputSchema: z.ZodType<Prisma.GenreMinOrderByAggregateInput> = z.object({
-  id: z.lazy(() => SortOrderSchema).optional(),
-  name: z.lazy(() => SortOrderSchema).optional()
-}).strict();
-
 export const DeveloperCountOrderByAggregateInputSchema: z.ZodType<Prisma.DeveloperCountOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const DeveloperMaxOrderByAggregateInputSchema: z.ZodType<Prisma.DeveloperMaxOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const DeveloperMinOrderByAggregateInputSchema: z.ZodType<Prisma.DeveloperMinOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const PublisherCountOrderByAggregateInputSchema: z.ZodType<Prisma.PublisherCountOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const PublisherMaxOrderByAggregateInputSchema: z.ZodType<Prisma.PublisherMaxOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const PublisherMinOrderByAggregateInputSchema: z.ZodType<Prisma.PublisherMinOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const PlatformCountOrderByAggregateInputSchema: z.ZodType<Prisma.PlatformCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const PlatformMaxOrderByAggregateInputSchema: z.ZodType<Prisma.PlatformMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const PlatformMinOrderByAggregateInputSchema: z.ZodType<Prisma.PlatformMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const GenreCountOrderByAggregateInputSchema: z.ZodType<Prisma.GenreCountOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const GenreMaxOrderByAggregateInputSchema: z.ZodType<Prisma.GenreMaxOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
+  name: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const GenreMinOrderByAggregateInputSchema: z.ZodType<Prisma.GenreMinOrderByAggregateInput> = z.object({
+  id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const TagCountOrderByAggregateInputSchema: z.ZodType<Prisma.TagCountOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const TagMaxOrderByAggregateInputSchema: z.ZodType<Prisma.TagMaxOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional()
 }).strict();
 
 export const TagMinOrderByAggregateInputSchema: z.ZodType<Prisma.TagMinOrderByAggregateInput> = z.object({
   id: z.lazy(() => SortOrderSchema).optional(),
+  slug: z.lazy(() => SortOrderSchema).optional(),
   name: z.lazy(() => SortOrderSchema).optional()
+}).strict();
+
+export const DeveloperCreateNestedManyWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperCreateNestedManyWithoutGamesInput> = z.object({
+  create: z.union([ z.lazy(() => DeveloperCreateWithoutGamesInputSchema),z.lazy(() => DeveloperCreateWithoutGamesInputSchema).array(),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => DeveloperCreateOrConnectWithoutGamesInputSchema),z.lazy(() => DeveloperCreateOrConnectWithoutGamesInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => DeveloperWhereUniqueInputSchema),z.lazy(() => DeveloperWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const PublisherCreateNestedManyWithoutGamesInputSchema: z.ZodType<Prisma.PublisherCreateNestedManyWithoutGamesInput> = z.object({
+  create: z.union([ z.lazy(() => PublisherCreateWithoutGamesInputSchema),z.lazy(() => PublisherCreateWithoutGamesInputSchema).array(),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => PublisherCreateOrConnectWithoutGamesInputSchema),z.lazy(() => PublisherCreateOrConnectWithoutGamesInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => PublisherWhereUniqueInputSchema),z.lazy(() => PublisherWhereUniqueInputSchema).array() ]).optional(),
 }).strict();
 
 export const PlatformCreateNestedManyWithoutGamesInputSchema: z.ZodType<Prisma.PlatformCreateNestedManyWithoutGamesInput> = z.object({
@@ -1355,22 +1441,22 @@ export const GenreCreateNestedManyWithoutGamesInputSchema: z.ZodType<Prisma.Genr
   connect: z.union([ z.lazy(() => GenreWhereUniqueInputSchema),z.lazy(() => GenreWhereUniqueInputSchema).array() ]).optional(),
 }).strict();
 
-export const DeveloperCreateNestedOneWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperCreateNestedOneWithoutGamesInput> = z.object({
-  create: z.union([ z.lazy(() => DeveloperCreateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => DeveloperCreateOrConnectWithoutGamesInputSchema).optional(),
-  connect: z.lazy(() => DeveloperWhereUniqueInputSchema).optional()
-}).strict();
-
-export const PublisherCreateNestedOneWithoutGamesInputSchema: z.ZodType<Prisma.PublisherCreateNestedOneWithoutGamesInput> = z.object({
-  create: z.union([ z.lazy(() => PublisherCreateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => PublisherCreateOrConnectWithoutGamesInputSchema).optional(),
-  connect: z.lazy(() => PublisherWhereUniqueInputSchema).optional()
-}).strict();
-
 export const TagCreateNestedManyWithoutGamesInputSchema: z.ZodType<Prisma.TagCreateNestedManyWithoutGamesInput> = z.object({
   create: z.union([ z.lazy(() => TagCreateWithoutGamesInputSchema),z.lazy(() => TagCreateWithoutGamesInputSchema).array(),z.lazy(() => TagUncheckedCreateWithoutGamesInputSchema),z.lazy(() => TagUncheckedCreateWithoutGamesInputSchema).array() ]).optional(),
   connectOrCreate: z.union([ z.lazy(() => TagCreateOrConnectWithoutGamesInputSchema),z.lazy(() => TagCreateOrConnectWithoutGamesInputSchema).array() ]).optional(),
   connect: z.union([ z.lazy(() => TagWhereUniqueInputSchema),z.lazy(() => TagWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const DeveloperUncheckedCreateNestedManyWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUncheckedCreateNestedManyWithoutGamesInput> = z.object({
+  create: z.union([ z.lazy(() => DeveloperCreateWithoutGamesInputSchema),z.lazy(() => DeveloperCreateWithoutGamesInputSchema).array(),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => DeveloperCreateOrConnectWithoutGamesInputSchema),z.lazy(() => DeveloperCreateOrConnectWithoutGamesInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => DeveloperWhereUniqueInputSchema),z.lazy(() => DeveloperWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const PublisherUncheckedCreateNestedManyWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUncheckedCreateNestedManyWithoutGamesInput> = z.object({
+  create: z.union([ z.lazy(() => PublisherCreateWithoutGamesInputSchema),z.lazy(() => PublisherCreateWithoutGamesInputSchema).array(),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => PublisherCreateOrConnectWithoutGamesInputSchema),z.lazy(() => PublisherCreateOrConnectWithoutGamesInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => PublisherWhereUniqueInputSchema),z.lazy(() => PublisherWhereUniqueInputSchema).array() ]).optional(),
 }).strict();
 
 export const PlatformUncheckedCreateNestedManyWithoutGamesInputSchema: z.ZodType<Prisma.PlatformUncheckedCreateNestedManyWithoutGamesInput> = z.object({
@@ -1396,11 +1482,11 @@ export const StringFieldUpdateOperationsInputSchema: z.ZodType<Prisma.StringFiel
 }).strict();
 
 export const DecimalFieldUpdateOperationsInputSchema: z.ZodType<Prisma.DecimalFieldUpdateOperationsInput> = z.object({
-  set: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  increment: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  decrement: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  multiply: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  divide: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional()
+  set: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  increment: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  decrement: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  multiply: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  divide: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional()
 }).strict();
 
 export const NullableStringFieldUpdateOperationsInputSchema: z.ZodType<Prisma.NullableStringFieldUpdateOperationsInput> = z.object({
@@ -1417,6 +1503,32 @@ export const FloatFieldUpdateOperationsInputSchema: z.ZodType<Prisma.FloatFieldU
   decrement: z.number().optional(),
   multiply: z.number().optional(),
   divide: z.number().optional()
+}).strict();
+
+export const DeveloperUpdateManyWithoutGamesNestedInputSchema: z.ZodType<Prisma.DeveloperUpdateManyWithoutGamesNestedInput> = z.object({
+  create: z.union([ z.lazy(() => DeveloperCreateWithoutGamesInputSchema),z.lazy(() => DeveloperCreateWithoutGamesInputSchema).array(),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => DeveloperCreateOrConnectWithoutGamesInputSchema),z.lazy(() => DeveloperCreateOrConnectWithoutGamesInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => DeveloperUpsertWithWhereUniqueWithoutGamesInputSchema),z.lazy(() => DeveloperUpsertWithWhereUniqueWithoutGamesInputSchema).array() ]).optional(),
+  set: z.union([ z.lazy(() => DeveloperWhereUniqueInputSchema),z.lazy(() => DeveloperWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => DeveloperWhereUniqueInputSchema),z.lazy(() => DeveloperWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => DeveloperWhereUniqueInputSchema),z.lazy(() => DeveloperWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => DeveloperWhereUniqueInputSchema),z.lazy(() => DeveloperWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => DeveloperUpdateWithWhereUniqueWithoutGamesInputSchema),z.lazy(() => DeveloperUpdateWithWhereUniqueWithoutGamesInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => DeveloperUpdateManyWithWhereWithoutGamesInputSchema),z.lazy(() => DeveloperUpdateManyWithWhereWithoutGamesInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => DeveloperScalarWhereInputSchema),z.lazy(() => DeveloperScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const PublisherUpdateManyWithoutGamesNestedInputSchema: z.ZodType<Prisma.PublisherUpdateManyWithoutGamesNestedInput> = z.object({
+  create: z.union([ z.lazy(() => PublisherCreateWithoutGamesInputSchema),z.lazy(() => PublisherCreateWithoutGamesInputSchema).array(),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => PublisherCreateOrConnectWithoutGamesInputSchema),z.lazy(() => PublisherCreateOrConnectWithoutGamesInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => PublisherUpsertWithWhereUniqueWithoutGamesInputSchema),z.lazy(() => PublisherUpsertWithWhereUniqueWithoutGamesInputSchema).array() ]).optional(),
+  set: z.union([ z.lazy(() => PublisherWhereUniqueInputSchema),z.lazy(() => PublisherWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => PublisherWhereUniqueInputSchema),z.lazy(() => PublisherWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => PublisherWhereUniqueInputSchema),z.lazy(() => PublisherWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => PublisherWhereUniqueInputSchema),z.lazy(() => PublisherWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => PublisherUpdateWithWhereUniqueWithoutGamesInputSchema),z.lazy(() => PublisherUpdateWithWhereUniqueWithoutGamesInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => PublisherUpdateManyWithWhereWithoutGamesInputSchema),z.lazy(() => PublisherUpdateManyWithWhereWithoutGamesInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => PublisherScalarWhereInputSchema),z.lazy(() => PublisherScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
 export const PlatformUpdateManyWithoutGamesNestedInputSchema: z.ZodType<Prisma.PlatformUpdateManyWithoutGamesNestedInput> = z.object({
@@ -1445,22 +1557,6 @@ export const GenreUpdateManyWithoutGamesNestedInputSchema: z.ZodType<Prisma.Genr
   deleteMany: z.union([ z.lazy(() => GenreScalarWhereInputSchema),z.lazy(() => GenreScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
-export const DeveloperUpdateOneRequiredWithoutGamesNestedInputSchema: z.ZodType<Prisma.DeveloperUpdateOneRequiredWithoutGamesNestedInput> = z.object({
-  create: z.union([ z.lazy(() => DeveloperCreateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => DeveloperCreateOrConnectWithoutGamesInputSchema).optional(),
-  upsert: z.lazy(() => DeveloperUpsertWithoutGamesInputSchema).optional(),
-  connect: z.lazy(() => DeveloperWhereUniqueInputSchema).optional(),
-  update: z.union([ z.lazy(() => DeveloperUpdateToOneWithWhereWithoutGamesInputSchema),z.lazy(() => DeveloperUpdateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedUpdateWithoutGamesInputSchema) ]).optional(),
-}).strict();
-
-export const PublisherUpdateOneRequiredWithoutGamesNestedInputSchema: z.ZodType<Prisma.PublisherUpdateOneRequiredWithoutGamesNestedInput> = z.object({
-  create: z.union([ z.lazy(() => PublisherCreateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema) ]).optional(),
-  connectOrCreate: z.lazy(() => PublisherCreateOrConnectWithoutGamesInputSchema).optional(),
-  upsert: z.lazy(() => PublisherUpsertWithoutGamesInputSchema).optional(),
-  connect: z.lazy(() => PublisherWhereUniqueInputSchema).optional(),
-  update: z.union([ z.lazy(() => PublisherUpdateToOneWithWhereWithoutGamesInputSchema),z.lazy(() => PublisherUpdateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedUpdateWithoutGamesInputSchema) ]).optional(),
-}).strict();
-
 export const TagUpdateManyWithoutGamesNestedInputSchema: z.ZodType<Prisma.TagUpdateManyWithoutGamesNestedInput> = z.object({
   create: z.union([ z.lazy(() => TagCreateWithoutGamesInputSchema),z.lazy(() => TagCreateWithoutGamesInputSchema).array(),z.lazy(() => TagUncheckedCreateWithoutGamesInputSchema),z.lazy(() => TagUncheckedCreateWithoutGamesInputSchema).array() ]).optional(),
   connectOrCreate: z.union([ z.lazy(() => TagCreateOrConnectWithoutGamesInputSchema),z.lazy(() => TagCreateOrConnectWithoutGamesInputSchema).array() ]).optional(),
@@ -1472,6 +1568,32 @@ export const TagUpdateManyWithoutGamesNestedInputSchema: z.ZodType<Prisma.TagUpd
   update: z.union([ z.lazy(() => TagUpdateWithWhereUniqueWithoutGamesInputSchema),z.lazy(() => TagUpdateWithWhereUniqueWithoutGamesInputSchema).array() ]).optional(),
   updateMany: z.union([ z.lazy(() => TagUpdateManyWithWhereWithoutGamesInputSchema),z.lazy(() => TagUpdateManyWithWhereWithoutGamesInputSchema).array() ]).optional(),
   deleteMany: z.union([ z.lazy(() => TagScalarWhereInputSchema),z.lazy(() => TagScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const DeveloperUncheckedUpdateManyWithoutGamesNestedInputSchema: z.ZodType<Prisma.DeveloperUncheckedUpdateManyWithoutGamesNestedInput> = z.object({
+  create: z.union([ z.lazy(() => DeveloperCreateWithoutGamesInputSchema),z.lazy(() => DeveloperCreateWithoutGamesInputSchema).array(),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => DeveloperCreateOrConnectWithoutGamesInputSchema),z.lazy(() => DeveloperCreateOrConnectWithoutGamesInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => DeveloperUpsertWithWhereUniqueWithoutGamesInputSchema),z.lazy(() => DeveloperUpsertWithWhereUniqueWithoutGamesInputSchema).array() ]).optional(),
+  set: z.union([ z.lazy(() => DeveloperWhereUniqueInputSchema),z.lazy(() => DeveloperWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => DeveloperWhereUniqueInputSchema),z.lazy(() => DeveloperWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => DeveloperWhereUniqueInputSchema),z.lazy(() => DeveloperWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => DeveloperWhereUniqueInputSchema),z.lazy(() => DeveloperWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => DeveloperUpdateWithWhereUniqueWithoutGamesInputSchema),z.lazy(() => DeveloperUpdateWithWhereUniqueWithoutGamesInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => DeveloperUpdateManyWithWhereWithoutGamesInputSchema),z.lazy(() => DeveloperUpdateManyWithWhereWithoutGamesInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => DeveloperScalarWhereInputSchema),z.lazy(() => DeveloperScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const PublisherUncheckedUpdateManyWithoutGamesNestedInputSchema: z.ZodType<Prisma.PublisherUncheckedUpdateManyWithoutGamesNestedInput> = z.object({
+  create: z.union([ z.lazy(() => PublisherCreateWithoutGamesInputSchema),z.lazy(() => PublisherCreateWithoutGamesInputSchema).array(),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => PublisherCreateOrConnectWithoutGamesInputSchema),z.lazy(() => PublisherCreateOrConnectWithoutGamesInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => PublisherUpsertWithWhereUniqueWithoutGamesInputSchema),z.lazy(() => PublisherUpsertWithWhereUniqueWithoutGamesInputSchema).array() ]).optional(),
+  set: z.union([ z.lazy(() => PublisherWhereUniqueInputSchema),z.lazy(() => PublisherWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => PublisherWhereUniqueInputSchema),z.lazy(() => PublisherWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => PublisherWhereUniqueInputSchema),z.lazy(() => PublisherWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => PublisherWhereUniqueInputSchema),z.lazy(() => PublisherWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => PublisherUpdateWithWhereUniqueWithoutGamesInputSchema),z.lazy(() => PublisherUpdateWithWhereUniqueWithoutGamesInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => PublisherUpdateManyWithWhereWithoutGamesInputSchema),z.lazy(() => PublisherUpdateManyWithWhereWithoutGamesInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => PublisherScalarWhereInputSchema),z.lazy(() => PublisherScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
 export const PlatformUncheckedUpdateManyWithoutGamesNestedInputSchema: z.ZodType<Prisma.PlatformUncheckedUpdateManyWithoutGamesNestedInput> = z.object({
@@ -1511,6 +1633,82 @@ export const TagUncheckedUpdateManyWithoutGamesNestedInputSchema: z.ZodType<Pris
   update: z.union([ z.lazy(() => TagUpdateWithWhereUniqueWithoutGamesInputSchema),z.lazy(() => TagUpdateWithWhereUniqueWithoutGamesInputSchema).array() ]).optional(),
   updateMany: z.union([ z.lazy(() => TagUpdateManyWithWhereWithoutGamesInputSchema),z.lazy(() => TagUpdateManyWithWhereWithoutGamesInputSchema).array() ]).optional(),
   deleteMany: z.union([ z.lazy(() => TagScalarWhereInputSchema),z.lazy(() => TagScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const GameCreateNestedManyWithoutDevelopersInputSchema: z.ZodType<Prisma.GameCreateNestedManyWithoutDevelopersInput> = z.object({
+  create: z.union([ z.lazy(() => GameCreateWithoutDevelopersInputSchema),z.lazy(() => GameCreateWithoutDevelopersInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutDevelopersInputSchema),z.lazy(() => GameUncheckedCreateWithoutDevelopersInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutDevelopersInputSchema),z.lazy(() => GameCreateOrConnectWithoutDevelopersInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const GameUncheckedCreateNestedManyWithoutDevelopersInputSchema: z.ZodType<Prisma.GameUncheckedCreateNestedManyWithoutDevelopersInput> = z.object({
+  create: z.union([ z.lazy(() => GameCreateWithoutDevelopersInputSchema),z.lazy(() => GameCreateWithoutDevelopersInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutDevelopersInputSchema),z.lazy(() => GameUncheckedCreateWithoutDevelopersInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutDevelopersInputSchema),z.lazy(() => GameCreateOrConnectWithoutDevelopersInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const GameUpdateManyWithoutDevelopersNestedInputSchema: z.ZodType<Prisma.GameUpdateManyWithoutDevelopersNestedInput> = z.object({
+  create: z.union([ z.lazy(() => GameCreateWithoutDevelopersInputSchema),z.lazy(() => GameCreateWithoutDevelopersInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutDevelopersInputSchema),z.lazy(() => GameUncheckedCreateWithoutDevelopersInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutDevelopersInputSchema),z.lazy(() => GameCreateOrConnectWithoutDevelopersInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => GameUpsertWithWhereUniqueWithoutDevelopersInputSchema),z.lazy(() => GameUpsertWithWhereUniqueWithoutDevelopersInputSchema).array() ]).optional(),
+  set: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => GameUpdateWithWhereUniqueWithoutDevelopersInputSchema),z.lazy(() => GameUpdateWithWhereUniqueWithoutDevelopersInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => GameUpdateManyWithWhereWithoutDevelopersInputSchema),z.lazy(() => GameUpdateManyWithWhereWithoutDevelopersInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const GameUncheckedUpdateManyWithoutDevelopersNestedInputSchema: z.ZodType<Prisma.GameUncheckedUpdateManyWithoutDevelopersNestedInput> = z.object({
+  create: z.union([ z.lazy(() => GameCreateWithoutDevelopersInputSchema),z.lazy(() => GameCreateWithoutDevelopersInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutDevelopersInputSchema),z.lazy(() => GameUncheckedCreateWithoutDevelopersInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutDevelopersInputSchema),z.lazy(() => GameCreateOrConnectWithoutDevelopersInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => GameUpsertWithWhereUniqueWithoutDevelopersInputSchema),z.lazy(() => GameUpsertWithWhereUniqueWithoutDevelopersInputSchema).array() ]).optional(),
+  set: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => GameUpdateWithWhereUniqueWithoutDevelopersInputSchema),z.lazy(() => GameUpdateWithWhereUniqueWithoutDevelopersInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => GameUpdateManyWithWhereWithoutDevelopersInputSchema),z.lazy(() => GameUpdateManyWithWhereWithoutDevelopersInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const GameCreateNestedManyWithoutPublishersInputSchema: z.ZodType<Prisma.GameCreateNestedManyWithoutPublishersInput> = z.object({
+  create: z.union([ z.lazy(() => GameCreateWithoutPublishersInputSchema),z.lazy(() => GameCreateWithoutPublishersInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutPublishersInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublishersInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutPublishersInputSchema),z.lazy(() => GameCreateOrConnectWithoutPublishersInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const GameUncheckedCreateNestedManyWithoutPublishersInputSchema: z.ZodType<Prisma.GameUncheckedCreateNestedManyWithoutPublishersInput> = z.object({
+  create: z.union([ z.lazy(() => GameCreateWithoutPublishersInputSchema),z.lazy(() => GameCreateWithoutPublishersInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutPublishersInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublishersInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutPublishersInputSchema),z.lazy(() => GameCreateOrConnectWithoutPublishersInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+}).strict();
+
+export const GameUpdateManyWithoutPublishersNestedInputSchema: z.ZodType<Prisma.GameUpdateManyWithoutPublishersNestedInput> = z.object({
+  create: z.union([ z.lazy(() => GameCreateWithoutPublishersInputSchema),z.lazy(() => GameCreateWithoutPublishersInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutPublishersInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublishersInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutPublishersInputSchema),z.lazy(() => GameCreateOrConnectWithoutPublishersInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => GameUpsertWithWhereUniqueWithoutPublishersInputSchema),z.lazy(() => GameUpsertWithWhereUniqueWithoutPublishersInputSchema).array() ]).optional(),
+  set: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => GameUpdateWithWhereUniqueWithoutPublishersInputSchema),z.lazy(() => GameUpdateWithWhereUniqueWithoutPublishersInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => GameUpdateManyWithWhereWithoutPublishersInputSchema),z.lazy(() => GameUpdateManyWithWhereWithoutPublishersInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
+}).strict();
+
+export const GameUncheckedUpdateManyWithoutPublishersNestedInputSchema: z.ZodType<Prisma.GameUncheckedUpdateManyWithoutPublishersNestedInput> = z.object({
+  create: z.union([ z.lazy(() => GameCreateWithoutPublishersInputSchema),z.lazy(() => GameCreateWithoutPublishersInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutPublishersInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublishersInputSchema).array() ]).optional(),
+  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutPublishersInputSchema),z.lazy(() => GameCreateOrConnectWithoutPublishersInputSchema).array() ]).optional(),
+  upsert: z.union([ z.lazy(() => GameUpsertWithWhereUniqueWithoutPublishersInputSchema),z.lazy(() => GameUpsertWithWhereUniqueWithoutPublishersInputSchema).array() ]).optional(),
+  set: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  disconnect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  delete: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
+  update: z.union([ z.lazy(() => GameUpdateWithWhereUniqueWithoutPublishersInputSchema),z.lazy(() => GameUpdateWithWhereUniqueWithoutPublishersInputSchema).array() ]).optional(),
+  updateMany: z.union([ z.lazy(() => GameUpdateManyWithWhereWithoutPublishersInputSchema),z.lazy(() => GameUpdateManyWithWhereWithoutPublishersInputSchema).array() ]).optional(),
+  deleteMany: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
 export const GameCreateNestedManyWithoutPlatformsInputSchema: z.ZodType<Prisma.GameCreateNestedManyWithoutPlatformsInput> = z.object({
@@ -1589,90 +1787,6 @@ export const GameUncheckedUpdateManyWithoutGenresNestedInputSchema: z.ZodType<Pr
   deleteMany: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
 }).strict();
 
-export const GameCreateNestedManyWithoutDeveloperInputSchema: z.ZodType<Prisma.GameCreateNestedManyWithoutDeveloperInput> = z.object({
-  create: z.union([ z.lazy(() => GameCreateWithoutDeveloperInputSchema),z.lazy(() => GameCreateWithoutDeveloperInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutDeveloperInputSchema),z.lazy(() => GameUncheckedCreateWithoutDeveloperInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutDeveloperInputSchema),z.lazy(() => GameCreateOrConnectWithoutDeveloperInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => GameCreateManyDeveloperInputEnvelopeSchema).optional(),
-  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-}).strict();
-
-export const GameUncheckedCreateNestedManyWithoutDeveloperInputSchema: z.ZodType<Prisma.GameUncheckedCreateNestedManyWithoutDeveloperInput> = z.object({
-  create: z.union([ z.lazy(() => GameCreateWithoutDeveloperInputSchema),z.lazy(() => GameCreateWithoutDeveloperInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutDeveloperInputSchema),z.lazy(() => GameUncheckedCreateWithoutDeveloperInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutDeveloperInputSchema),z.lazy(() => GameCreateOrConnectWithoutDeveloperInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => GameCreateManyDeveloperInputEnvelopeSchema).optional(),
-  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-}).strict();
-
-export const GameUpdateManyWithoutDeveloperNestedInputSchema: z.ZodType<Prisma.GameUpdateManyWithoutDeveloperNestedInput> = z.object({
-  create: z.union([ z.lazy(() => GameCreateWithoutDeveloperInputSchema),z.lazy(() => GameCreateWithoutDeveloperInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutDeveloperInputSchema),z.lazy(() => GameUncheckedCreateWithoutDeveloperInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutDeveloperInputSchema),z.lazy(() => GameCreateOrConnectWithoutDeveloperInputSchema).array() ]).optional(),
-  upsert: z.union([ z.lazy(() => GameUpsertWithWhereUniqueWithoutDeveloperInputSchema),z.lazy(() => GameUpsertWithWhereUniqueWithoutDeveloperInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => GameCreateManyDeveloperInputEnvelopeSchema).optional(),
-  set: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  disconnect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  delete: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  update: z.union([ z.lazy(() => GameUpdateWithWhereUniqueWithoutDeveloperInputSchema),z.lazy(() => GameUpdateWithWhereUniqueWithoutDeveloperInputSchema).array() ]).optional(),
-  updateMany: z.union([ z.lazy(() => GameUpdateManyWithWhereWithoutDeveloperInputSchema),z.lazy(() => GameUpdateManyWithWhereWithoutDeveloperInputSchema).array() ]).optional(),
-  deleteMany: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
-}).strict();
-
-export const GameUncheckedUpdateManyWithoutDeveloperNestedInputSchema: z.ZodType<Prisma.GameUncheckedUpdateManyWithoutDeveloperNestedInput> = z.object({
-  create: z.union([ z.lazy(() => GameCreateWithoutDeveloperInputSchema),z.lazy(() => GameCreateWithoutDeveloperInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutDeveloperInputSchema),z.lazy(() => GameUncheckedCreateWithoutDeveloperInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutDeveloperInputSchema),z.lazy(() => GameCreateOrConnectWithoutDeveloperInputSchema).array() ]).optional(),
-  upsert: z.union([ z.lazy(() => GameUpsertWithWhereUniqueWithoutDeveloperInputSchema),z.lazy(() => GameUpsertWithWhereUniqueWithoutDeveloperInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => GameCreateManyDeveloperInputEnvelopeSchema).optional(),
-  set: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  disconnect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  delete: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  update: z.union([ z.lazy(() => GameUpdateWithWhereUniqueWithoutDeveloperInputSchema),z.lazy(() => GameUpdateWithWhereUniqueWithoutDeveloperInputSchema).array() ]).optional(),
-  updateMany: z.union([ z.lazy(() => GameUpdateManyWithWhereWithoutDeveloperInputSchema),z.lazy(() => GameUpdateManyWithWhereWithoutDeveloperInputSchema).array() ]).optional(),
-  deleteMany: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
-}).strict();
-
-export const GameCreateNestedManyWithoutPublisherInputSchema: z.ZodType<Prisma.GameCreateNestedManyWithoutPublisherInput> = z.object({
-  create: z.union([ z.lazy(() => GameCreateWithoutPublisherInputSchema),z.lazy(() => GameCreateWithoutPublisherInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutPublisherInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublisherInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutPublisherInputSchema),z.lazy(() => GameCreateOrConnectWithoutPublisherInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => GameCreateManyPublisherInputEnvelopeSchema).optional(),
-  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-}).strict();
-
-export const GameUncheckedCreateNestedManyWithoutPublisherInputSchema: z.ZodType<Prisma.GameUncheckedCreateNestedManyWithoutPublisherInput> = z.object({
-  create: z.union([ z.lazy(() => GameCreateWithoutPublisherInputSchema),z.lazy(() => GameCreateWithoutPublisherInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutPublisherInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublisherInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutPublisherInputSchema),z.lazy(() => GameCreateOrConnectWithoutPublisherInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => GameCreateManyPublisherInputEnvelopeSchema).optional(),
-  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-}).strict();
-
-export const GameUpdateManyWithoutPublisherNestedInputSchema: z.ZodType<Prisma.GameUpdateManyWithoutPublisherNestedInput> = z.object({
-  create: z.union([ z.lazy(() => GameCreateWithoutPublisherInputSchema),z.lazy(() => GameCreateWithoutPublisherInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutPublisherInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublisherInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutPublisherInputSchema),z.lazy(() => GameCreateOrConnectWithoutPublisherInputSchema).array() ]).optional(),
-  upsert: z.union([ z.lazy(() => GameUpsertWithWhereUniqueWithoutPublisherInputSchema),z.lazy(() => GameUpsertWithWhereUniqueWithoutPublisherInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => GameCreateManyPublisherInputEnvelopeSchema).optional(),
-  set: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  disconnect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  delete: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  update: z.union([ z.lazy(() => GameUpdateWithWhereUniqueWithoutPublisherInputSchema),z.lazy(() => GameUpdateWithWhereUniqueWithoutPublisherInputSchema).array() ]).optional(),
-  updateMany: z.union([ z.lazy(() => GameUpdateManyWithWhereWithoutPublisherInputSchema),z.lazy(() => GameUpdateManyWithWhereWithoutPublisherInputSchema).array() ]).optional(),
-  deleteMany: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
-}).strict();
-
-export const GameUncheckedUpdateManyWithoutPublisherNestedInputSchema: z.ZodType<Prisma.GameUncheckedUpdateManyWithoutPublisherNestedInput> = z.object({
-  create: z.union([ z.lazy(() => GameCreateWithoutPublisherInputSchema),z.lazy(() => GameCreateWithoutPublisherInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutPublisherInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublisherInputSchema).array() ]).optional(),
-  connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutPublisherInputSchema),z.lazy(() => GameCreateOrConnectWithoutPublisherInputSchema).array() ]).optional(),
-  upsert: z.union([ z.lazy(() => GameUpsertWithWhereUniqueWithoutPublisherInputSchema),z.lazy(() => GameUpsertWithWhereUniqueWithoutPublisherInputSchema).array() ]).optional(),
-  createMany: z.lazy(() => GameCreateManyPublisherInputEnvelopeSchema).optional(),
-  set: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  disconnect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  delete: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  connect: z.union([ z.lazy(() => GameWhereUniqueInputSchema),z.lazy(() => GameWhereUniqueInputSchema).array() ]).optional(),
-  update: z.union([ z.lazy(() => GameUpdateWithWhereUniqueWithoutPublisherInputSchema),z.lazy(() => GameUpdateWithWhereUniqueWithoutPublisherInputSchema).array() ]).optional(),
-  updateMany: z.union([ z.lazy(() => GameUpdateManyWithWhereWithoutPublisherInputSchema),z.lazy(() => GameUpdateManyWithWhereWithoutPublisherInputSchema).array() ]).optional(),
-  deleteMany: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
-}).strict();
-
 export const GameCreateNestedManyWithoutTagsInputSchema: z.ZodType<Prisma.GameCreateNestedManyWithoutTagsInput> = z.object({
   create: z.union([ z.lazy(() => GameCreateWithoutTagsInputSchema),z.lazy(() => GameCreateWithoutTagsInputSchema).array(),z.lazy(() => GameUncheckedCreateWithoutTagsInputSchema),z.lazy(() => GameUncheckedCreateWithoutTagsInputSchema).array() ]).optional(),
   connectOrCreate: z.union([ z.lazy(() => GameCreateOrConnectWithoutTagsInputSchema),z.lazy(() => GameCreateOrConnectWithoutTagsInputSchema).array() ]).optional(),
@@ -1726,14 +1840,14 @@ export const NestedStringFilterSchema: z.ZodType<Prisma.NestedStringFilter> = z.
 }).strict();
 
 export const NestedDecimalFilterSchema: z.ZodType<Prisma.NestedDecimalFilter> = z.object({
-  equals: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  in: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
-  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
-  lt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  lte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  gt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  gte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalFilterSchema) ]).optional(),
+  equals: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  in: z.union([z.number().array(),z.string().array(),z.instanceof(Decimal).array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
+  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Decimal).array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
+  lt: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  lte: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gt: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gte: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalFilterSchema) ]).optional(),
 }).strict();
 
 export const NestedStringNullableFilterSchema: z.ZodType<Prisma.NestedStringNullableFilter> = z.object({
@@ -1801,14 +1915,14 @@ export const NestedIntFilterSchema: z.ZodType<Prisma.NestedIntFilter> = z.object
 }).strict();
 
 export const NestedDecimalWithAggregatesFilterSchema: z.ZodType<Prisma.NestedDecimalWithAggregatesFilter> = z.object({
-  equals: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  in: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
-  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
-  lt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  lte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  gt: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  gte: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
-  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalWithAggregatesFilterSchema) ]).optional(),
+  equals: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  in: z.union([z.number().array(),z.string().array(),z.instanceof(Decimal).array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
+  notIn: z.union([z.number().array(),z.string().array(),z.instanceof(Decimal).array(),z.instanceof(Prisma.Decimal).array(),DecimalJsLikeSchema.array(),]).refine((v) => Array.isArray(v) && (v as any[]).every((v) => isValidDecimalInput(v)), { message: 'Must be a Decimal' }).optional(),
+  lt: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  lte: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gt: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  gte: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }).optional(),
+  not: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => NestedDecimalWithAggregatesFilterSchema) ]).optional(),
   _count: z.lazy(() => NestedIntFilterSchema).optional(),
   _avg: z.lazy(() => NestedDecimalFilterSchema).optional(),
   _sum: z.lazy(() => NestedDecimalFilterSchema).optional(),
@@ -1874,43 +1988,15 @@ export const NestedFloatWithAggregatesFilterSchema: z.ZodType<Prisma.NestedFloat
   _max: z.lazy(() => NestedFloatFilterSchema).optional()
 }).strict();
 
-export const PlatformCreateWithoutGamesInputSchema: z.ZodType<Prisma.PlatformCreateWithoutGamesInput> = z.object({
-  id: z.string().cuid().optional(),
-  name: z.string()
-}).strict();
-
-export const PlatformUncheckedCreateWithoutGamesInputSchema: z.ZodType<Prisma.PlatformUncheckedCreateWithoutGamesInput> = z.object({
-  id: z.string().cuid().optional(),
-  name: z.string()
-}).strict();
-
-export const PlatformCreateOrConnectWithoutGamesInputSchema: z.ZodType<Prisma.PlatformCreateOrConnectWithoutGamesInput> = z.object({
-  where: z.lazy(() => PlatformWhereUniqueInputSchema),
-  create: z.union([ z.lazy(() => PlatformCreateWithoutGamesInputSchema),z.lazy(() => PlatformUncheckedCreateWithoutGamesInputSchema) ]),
-}).strict();
-
-export const GenreCreateWithoutGamesInputSchema: z.ZodType<Prisma.GenreCreateWithoutGamesInput> = z.object({
-  id: z.string().cuid().optional(),
-  name: z.string()
-}).strict();
-
-export const GenreUncheckedCreateWithoutGamesInputSchema: z.ZodType<Prisma.GenreUncheckedCreateWithoutGamesInput> = z.object({
-  id: z.string().cuid().optional(),
-  name: z.string()
-}).strict();
-
-export const GenreCreateOrConnectWithoutGamesInputSchema: z.ZodType<Prisma.GenreCreateOrConnectWithoutGamesInput> = z.object({
-  where: z.lazy(() => GenreWhereUniqueInputSchema),
-  create: z.union([ z.lazy(() => GenreCreateWithoutGamesInputSchema),z.lazy(() => GenreUncheckedCreateWithoutGamesInputSchema) ]),
-}).strict();
-
 export const DeveloperCreateWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperCreateWithoutGamesInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string()
 }).strict();
 
 export const DeveloperUncheckedCreateWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUncheckedCreateWithoutGamesInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string()
 }).strict();
 
@@ -1921,11 +2007,13 @@ export const DeveloperCreateOrConnectWithoutGamesInputSchema: z.ZodType<Prisma.D
 
 export const PublisherCreateWithoutGamesInputSchema: z.ZodType<Prisma.PublisherCreateWithoutGamesInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string()
 }).strict();
 
 export const PublisherUncheckedCreateWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUncheckedCreateWithoutGamesInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string()
 }).strict();
 
@@ -1934,19 +2022,105 @@ export const PublisherCreateOrConnectWithoutGamesInputSchema: z.ZodType<Prisma.P
   create: z.union([ z.lazy(() => PublisherCreateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema) ]),
 }).strict();
 
+export const PlatformCreateWithoutGamesInputSchema: z.ZodType<Prisma.PlatformCreateWithoutGamesInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string()
+}).strict();
+
+export const PlatformUncheckedCreateWithoutGamesInputSchema: z.ZodType<Prisma.PlatformUncheckedCreateWithoutGamesInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string()
+}).strict();
+
+export const PlatformCreateOrConnectWithoutGamesInputSchema: z.ZodType<Prisma.PlatformCreateOrConnectWithoutGamesInput> = z.object({
+  where: z.lazy(() => PlatformWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => PlatformCreateWithoutGamesInputSchema),z.lazy(() => PlatformUncheckedCreateWithoutGamesInputSchema) ]),
+}).strict();
+
+export const GenreCreateWithoutGamesInputSchema: z.ZodType<Prisma.GenreCreateWithoutGamesInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string()
+}).strict();
+
+export const GenreUncheckedCreateWithoutGamesInputSchema: z.ZodType<Prisma.GenreUncheckedCreateWithoutGamesInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string()
+}).strict();
+
+export const GenreCreateOrConnectWithoutGamesInputSchema: z.ZodType<Prisma.GenreCreateOrConnectWithoutGamesInput> = z.object({
+  where: z.lazy(() => GenreWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => GenreCreateWithoutGamesInputSchema),z.lazy(() => GenreUncheckedCreateWithoutGamesInputSchema) ]),
+}).strict();
+
 export const TagCreateWithoutGamesInputSchema: z.ZodType<Prisma.TagCreateWithoutGamesInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string()
 }).strict();
 
 export const TagUncheckedCreateWithoutGamesInputSchema: z.ZodType<Prisma.TagUncheckedCreateWithoutGamesInput> = z.object({
   id: z.string().cuid().optional(),
+  slug: z.string(),
   name: z.string()
 }).strict();
 
 export const TagCreateOrConnectWithoutGamesInputSchema: z.ZodType<Prisma.TagCreateOrConnectWithoutGamesInput> = z.object({
   where: z.lazy(() => TagWhereUniqueInputSchema),
   create: z.union([ z.lazy(() => TagCreateWithoutGamesInputSchema),z.lazy(() => TagUncheckedCreateWithoutGamesInputSchema) ]),
+}).strict();
+
+export const DeveloperUpsertWithWhereUniqueWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUpsertWithWhereUniqueWithoutGamesInput> = z.object({
+  where: z.lazy(() => DeveloperWhereUniqueInputSchema),
+  update: z.union([ z.lazy(() => DeveloperUpdateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedUpdateWithoutGamesInputSchema) ]),
+  create: z.union([ z.lazy(() => DeveloperCreateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema) ]),
+}).strict();
+
+export const DeveloperUpdateWithWhereUniqueWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUpdateWithWhereUniqueWithoutGamesInput> = z.object({
+  where: z.lazy(() => DeveloperWhereUniqueInputSchema),
+  data: z.union([ z.lazy(() => DeveloperUpdateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedUpdateWithoutGamesInputSchema) ]),
+}).strict();
+
+export const DeveloperUpdateManyWithWhereWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUpdateManyWithWhereWithoutGamesInput> = z.object({
+  where: z.lazy(() => DeveloperScalarWhereInputSchema),
+  data: z.union([ z.lazy(() => DeveloperUpdateManyMutationInputSchema),z.lazy(() => DeveloperUncheckedUpdateManyWithoutGamesInputSchema) ]),
+}).strict();
+
+export const DeveloperScalarWhereInputSchema: z.ZodType<Prisma.DeveloperScalarWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => DeveloperScalarWhereInputSchema),z.lazy(() => DeveloperScalarWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => DeveloperScalarWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => DeveloperScalarWhereInputSchema),z.lazy(() => DeveloperScalarWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+}).strict();
+
+export const PublisherUpsertWithWhereUniqueWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUpsertWithWhereUniqueWithoutGamesInput> = z.object({
+  where: z.lazy(() => PublisherWhereUniqueInputSchema),
+  update: z.union([ z.lazy(() => PublisherUpdateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedUpdateWithoutGamesInputSchema) ]),
+  create: z.union([ z.lazy(() => PublisherCreateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema) ]),
+}).strict();
+
+export const PublisherUpdateWithWhereUniqueWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUpdateWithWhereUniqueWithoutGamesInput> = z.object({
+  where: z.lazy(() => PublisherWhereUniqueInputSchema),
+  data: z.union([ z.lazy(() => PublisherUpdateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedUpdateWithoutGamesInputSchema) ]),
+}).strict();
+
+export const PublisherUpdateManyWithWhereWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUpdateManyWithWhereWithoutGamesInput> = z.object({
+  where: z.lazy(() => PublisherScalarWhereInputSchema),
+  data: z.union([ z.lazy(() => PublisherUpdateManyMutationInputSchema),z.lazy(() => PublisherUncheckedUpdateManyWithoutGamesInputSchema) ]),
+}).strict();
+
+export const PublisherScalarWhereInputSchema: z.ZodType<Prisma.PublisherScalarWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => PublisherScalarWhereInputSchema),z.lazy(() => PublisherScalarWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => PublisherScalarWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => PublisherScalarWhereInputSchema),z.lazy(() => PublisherScalarWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
 }).strict();
 
 export const PlatformUpsertWithWhereUniqueWithoutGamesInputSchema: z.ZodType<Prisma.PlatformUpsertWithWhereUniqueWithoutGamesInput> = z.object({
@@ -1970,6 +2144,7 @@ export const PlatformScalarWhereInputSchema: z.ZodType<Prisma.PlatformScalarWher
   OR: z.lazy(() => PlatformScalarWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => PlatformScalarWhereInputSchema),z.lazy(() => PlatformScalarWhereInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
 }).strict();
 
@@ -1994,49 +2169,8 @@ export const GenreScalarWhereInputSchema: z.ZodType<Prisma.GenreScalarWhereInput
   OR: z.lazy(() => GenreScalarWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => GenreScalarWhereInputSchema),z.lazy(() => GenreScalarWhereInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-}).strict();
-
-export const DeveloperUpsertWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUpsertWithoutGamesInput> = z.object({
-  update: z.union([ z.lazy(() => DeveloperUpdateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedUpdateWithoutGamesInputSchema) ]),
-  create: z.union([ z.lazy(() => DeveloperCreateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedCreateWithoutGamesInputSchema) ]),
-  where: z.lazy(() => DeveloperWhereInputSchema).optional()
-}).strict();
-
-export const DeveloperUpdateToOneWithWhereWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUpdateToOneWithWhereWithoutGamesInput> = z.object({
-  where: z.lazy(() => DeveloperWhereInputSchema).optional(),
-  data: z.union([ z.lazy(() => DeveloperUpdateWithoutGamesInputSchema),z.lazy(() => DeveloperUncheckedUpdateWithoutGamesInputSchema) ]),
-}).strict();
-
-export const DeveloperUpdateWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUpdateWithoutGamesInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const DeveloperUncheckedUpdateWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUncheckedUpdateWithoutGamesInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const PublisherUpsertWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUpsertWithoutGamesInput> = z.object({
-  update: z.union([ z.lazy(() => PublisherUpdateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedUpdateWithoutGamesInputSchema) ]),
-  create: z.union([ z.lazy(() => PublisherCreateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedCreateWithoutGamesInputSchema) ]),
-  where: z.lazy(() => PublisherWhereInputSchema).optional()
-}).strict();
-
-export const PublisherUpdateToOneWithWhereWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUpdateToOneWithWhereWithoutGamesInput> = z.object({
-  where: z.lazy(() => PublisherWhereInputSchema).optional(),
-  data: z.union([ z.lazy(() => PublisherUpdateWithoutGamesInputSchema),z.lazy(() => PublisherUncheckedUpdateWithoutGamesInputSchema) ]),
-}).strict();
-
-export const PublisherUpdateWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUpdateWithoutGamesInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const PublisherUncheckedUpdateWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUncheckedUpdateWithoutGamesInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const TagUpsertWithWhereUniqueWithoutGamesInputSchema: z.ZodType<Prisma.TagUpsertWithWhereUniqueWithoutGamesInput> = z.object({
@@ -2060,23 +2194,150 @@ export const TagScalarWhereInputSchema: z.ZodType<Prisma.TagScalarWhereInput> = 
   OR: z.lazy(() => TagScalarWhereInputSchema).array().optional(),
   NOT: z.union([ z.lazy(() => TagScalarWhereInputSchema),z.lazy(() => TagScalarWhereInputSchema).array() ]).optional(),
   id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
   name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
 }).strict();
 
-export const GameCreateWithoutPlatformsInputSchema: z.ZodType<Prisma.GameCreateWithoutPlatformsInput> = z.object({
+export const GameCreateWithoutDevelopersInputSchema: z.ZodType<Prisma.GameCreateWithoutDevelopersInput> = z.object({
   id: z.string().cuid().optional(),
   slug: z.string(),
   name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
   description: z.string().optional().nullable(),
   releaseDate: z.coerce.date(),
   imageUrl: z.string().optional().nullable(),
   rating: z.number(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  publishers: z.lazy(() => PublisherCreateNestedManyWithoutGamesInputSchema).optional(),
+  platforms: z.lazy(() => PlatformCreateNestedManyWithoutGamesInputSchema).optional(),
   genres: z.lazy(() => GenreCreateNestedManyWithoutGamesInputSchema).optional(),
-  developer: z.lazy(() => DeveloperCreateNestedOneWithoutGamesInputSchema),
-  publisher: z.lazy(() => PublisherCreateNestedOneWithoutGamesInputSchema),
+  tags: z.lazy(() => TagCreateNestedManyWithoutGamesInputSchema).optional()
+}).strict();
+
+export const GameUncheckedCreateWithoutDevelopersInputSchema: z.ZodType<Prisma.GameUncheckedCreateWithoutDevelopersInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string(),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  description: z.string().optional().nullable(),
+  releaseDate: z.coerce.date(),
+  imageUrl: z.string().optional().nullable(),
+  rating: z.number(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  publishers: z.lazy(() => PublisherUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
+  platforms: z.lazy(() => PlatformUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
+  genres: z.lazy(() => GenreUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
+  tags: z.lazy(() => TagUncheckedCreateNestedManyWithoutGamesInputSchema).optional()
+}).strict();
+
+export const GameCreateOrConnectWithoutDevelopersInputSchema: z.ZodType<Prisma.GameCreateOrConnectWithoutDevelopersInput> = z.object({
+  where: z.lazy(() => GameWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => GameCreateWithoutDevelopersInputSchema),z.lazy(() => GameUncheckedCreateWithoutDevelopersInputSchema) ]),
+}).strict();
+
+export const GameUpsertWithWhereUniqueWithoutDevelopersInputSchema: z.ZodType<Prisma.GameUpsertWithWhereUniqueWithoutDevelopersInput> = z.object({
+  where: z.lazy(() => GameWhereUniqueInputSchema),
+  update: z.union([ z.lazy(() => GameUpdateWithoutDevelopersInputSchema),z.lazy(() => GameUncheckedUpdateWithoutDevelopersInputSchema) ]),
+  create: z.union([ z.lazy(() => GameCreateWithoutDevelopersInputSchema),z.lazy(() => GameUncheckedCreateWithoutDevelopersInputSchema) ]),
+}).strict();
+
+export const GameUpdateWithWhereUniqueWithoutDevelopersInputSchema: z.ZodType<Prisma.GameUpdateWithWhereUniqueWithoutDevelopersInput> = z.object({
+  where: z.lazy(() => GameWhereUniqueInputSchema),
+  data: z.union([ z.lazy(() => GameUpdateWithoutDevelopersInputSchema),z.lazy(() => GameUncheckedUpdateWithoutDevelopersInputSchema) ]),
+}).strict();
+
+export const GameUpdateManyWithWhereWithoutDevelopersInputSchema: z.ZodType<Prisma.GameUpdateManyWithWhereWithoutDevelopersInput> = z.object({
+  where: z.lazy(() => GameScalarWhereInputSchema),
+  data: z.union([ z.lazy(() => GameUpdateManyMutationInputSchema),z.lazy(() => GameUncheckedUpdateManyWithoutDevelopersInputSchema) ]),
+}).strict();
+
+export const GameScalarWhereInputSchema: z.ZodType<Prisma.GameScalarWhereInput> = z.object({
+  AND: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
+  OR: z.lazy(() => GameScalarWhereInputSchema).array().optional(),
+  NOT: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
+  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
+  price: z.union([ z.lazy(() => DecimalFilterSchema),z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional(),
+  description: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
+  releaseDate: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+  imageUrl: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
+  rating: z.union([ z.lazy(() => FloatFilterSchema),z.number() ]).optional(),
+  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
+}).strict();
+
+export const GameCreateWithoutPublishersInputSchema: z.ZodType<Prisma.GameCreateWithoutPublishersInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string(),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  description: z.string().optional().nullable(),
+  releaseDate: z.coerce.date(),
+  imageUrl: z.string().optional().nullable(),
+  rating: z.number(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  developers: z.lazy(() => DeveloperCreateNestedManyWithoutGamesInputSchema).optional(),
+  platforms: z.lazy(() => PlatformCreateNestedManyWithoutGamesInputSchema).optional(),
+  genres: z.lazy(() => GenreCreateNestedManyWithoutGamesInputSchema).optional(),
+  tags: z.lazy(() => TagCreateNestedManyWithoutGamesInputSchema).optional()
+}).strict();
+
+export const GameUncheckedCreateWithoutPublishersInputSchema: z.ZodType<Prisma.GameUncheckedCreateWithoutPublishersInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string(),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  description: z.string().optional().nullable(),
+  releaseDate: z.coerce.date(),
+  imageUrl: z.string().optional().nullable(),
+  rating: z.number(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  developers: z.lazy(() => DeveloperUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
+  platforms: z.lazy(() => PlatformUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
+  genres: z.lazy(() => GenreUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
+  tags: z.lazy(() => TagUncheckedCreateNestedManyWithoutGamesInputSchema).optional()
+}).strict();
+
+export const GameCreateOrConnectWithoutPublishersInputSchema: z.ZodType<Prisma.GameCreateOrConnectWithoutPublishersInput> = z.object({
+  where: z.lazy(() => GameWhereUniqueInputSchema),
+  create: z.union([ z.lazy(() => GameCreateWithoutPublishersInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublishersInputSchema) ]),
+}).strict();
+
+export const GameUpsertWithWhereUniqueWithoutPublishersInputSchema: z.ZodType<Prisma.GameUpsertWithWhereUniqueWithoutPublishersInput> = z.object({
+  where: z.lazy(() => GameWhereUniqueInputSchema),
+  update: z.union([ z.lazy(() => GameUpdateWithoutPublishersInputSchema),z.lazy(() => GameUncheckedUpdateWithoutPublishersInputSchema) ]),
+  create: z.union([ z.lazy(() => GameCreateWithoutPublishersInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublishersInputSchema) ]),
+}).strict();
+
+export const GameUpdateWithWhereUniqueWithoutPublishersInputSchema: z.ZodType<Prisma.GameUpdateWithWhereUniqueWithoutPublishersInput> = z.object({
+  where: z.lazy(() => GameWhereUniqueInputSchema),
+  data: z.union([ z.lazy(() => GameUpdateWithoutPublishersInputSchema),z.lazy(() => GameUncheckedUpdateWithoutPublishersInputSchema) ]),
+}).strict();
+
+export const GameUpdateManyWithWhereWithoutPublishersInputSchema: z.ZodType<Prisma.GameUpdateManyWithWhereWithoutPublishersInput> = z.object({
+  where: z.lazy(() => GameScalarWhereInputSchema),
+  data: z.union([ z.lazy(() => GameUpdateManyMutationInputSchema),z.lazy(() => GameUncheckedUpdateManyWithoutPublishersInputSchema) ]),
+}).strict();
+
+export const GameCreateWithoutPlatformsInputSchema: z.ZodType<Prisma.GameCreateWithoutPlatformsInput> = z.object({
+  id: z.string().cuid().optional(),
+  slug: z.string(),
+  name: z.string(),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  description: z.string().optional().nullable(),
+  releaseDate: z.coerce.date(),
+  imageUrl: z.string().optional().nullable(),
+  rating: z.number(),
+  createdAt: z.coerce.date().optional(),
+  updatedAt: z.coerce.date().optional(),
+  developers: z.lazy(() => DeveloperCreateNestedManyWithoutGamesInputSchema).optional(),
+  publishers: z.lazy(() => PublisherCreateNestedManyWithoutGamesInputSchema).optional(),
+  genres: z.lazy(() => GenreCreateNestedManyWithoutGamesInputSchema).optional(),
   tags: z.lazy(() => TagCreateNestedManyWithoutGamesInputSchema).optional()
 }).strict();
 
@@ -2084,15 +2345,15 @@ export const GameUncheckedCreateWithoutPlatformsInputSchema: z.ZodType<Prisma.Ga
   id: z.string().cuid().optional(),
   slug: z.string(),
   name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
   description: z.string().optional().nullable(),
   releaseDate: z.coerce.date(),
   imageUrl: z.string().optional().nullable(),
   rating: z.number(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  developerId: z.string(),
-  publisherId: z.string(),
+  developers: z.lazy(() => DeveloperUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
   genres: z.lazy(() => GenreUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
   tags: z.lazy(() => TagUncheckedCreateNestedManyWithoutGamesInputSchema).optional()
 }).strict();
@@ -2118,38 +2379,20 @@ export const GameUpdateManyWithWhereWithoutPlatformsInputSchema: z.ZodType<Prism
   data: z.union([ z.lazy(() => GameUpdateManyMutationInputSchema),z.lazy(() => GameUncheckedUpdateManyWithoutPlatformsInputSchema) ]),
 }).strict();
 
-export const GameScalarWhereInputSchema: z.ZodType<Prisma.GameScalarWhereInput> = z.object({
-  AND: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
-  OR: z.lazy(() => GameScalarWhereInputSchema).array().optional(),
-  NOT: z.union([ z.lazy(() => GameScalarWhereInputSchema),z.lazy(() => GameScalarWhereInputSchema).array() ]).optional(),
-  id: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  slug: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  name: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  price: z.union([ z.lazy(() => DecimalFilterSchema),z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }) ]).optional(),
-  description: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
-  releaseDate: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
-  imageUrl: z.union([ z.lazy(() => StringNullableFilterSchema),z.string() ]).optional().nullable(),
-  rating: z.union([ z.lazy(() => FloatFilterSchema),z.number() ]).optional(),
-  createdAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
-  updatedAt: z.union([ z.lazy(() => DateTimeFilterSchema),z.coerce.date() ]).optional(),
-  developerId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-  publisherId: z.union([ z.lazy(() => StringFilterSchema),z.string() ]).optional(),
-}).strict();
-
 export const GameCreateWithoutGenresInputSchema: z.ZodType<Prisma.GameCreateWithoutGenresInput> = z.object({
   id: z.string().cuid().optional(),
   slug: z.string(),
   name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
   description: z.string().optional().nullable(),
   releaseDate: z.coerce.date(),
   imageUrl: z.string().optional().nullable(),
   rating: z.number(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  developers: z.lazy(() => DeveloperCreateNestedManyWithoutGamesInputSchema).optional(),
+  publishers: z.lazy(() => PublisherCreateNestedManyWithoutGamesInputSchema).optional(),
   platforms: z.lazy(() => PlatformCreateNestedManyWithoutGamesInputSchema).optional(),
-  developer: z.lazy(() => DeveloperCreateNestedOneWithoutGamesInputSchema),
-  publisher: z.lazy(() => PublisherCreateNestedOneWithoutGamesInputSchema),
   tags: z.lazy(() => TagCreateNestedManyWithoutGamesInputSchema).optional()
 }).strict();
 
@@ -2157,15 +2400,15 @@ export const GameUncheckedCreateWithoutGenresInputSchema: z.ZodType<Prisma.GameU
   id: z.string().cuid().optional(),
   slug: z.string(),
   name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
   description: z.string().optional().nullable(),
   releaseDate: z.coerce.date(),
   imageUrl: z.string().optional().nullable(),
   rating: z.number(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  developerId: z.string(),
-  publisherId: z.string(),
+  developers: z.lazy(() => DeveloperUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
   platforms: z.lazy(() => PlatformUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
   tags: z.lazy(() => TagUncheckedCreateNestedManyWithoutGamesInputSchema).optional()
 }).strict();
@@ -2191,156 +2434,36 @@ export const GameUpdateManyWithWhereWithoutGenresInputSchema: z.ZodType<Prisma.G
   data: z.union([ z.lazy(() => GameUpdateManyMutationInputSchema),z.lazy(() => GameUncheckedUpdateManyWithoutGenresInputSchema) ]),
 }).strict();
 
-export const GameCreateWithoutDeveloperInputSchema: z.ZodType<Prisma.GameCreateWithoutDeveloperInput> = z.object({
-  id: z.string().cuid().optional(),
-  slug: z.string(),
-  name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
-  description: z.string().optional().nullable(),
-  releaseDate: z.coerce.date(),
-  imageUrl: z.string().optional().nullable(),
-  rating: z.number(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  platforms: z.lazy(() => PlatformCreateNestedManyWithoutGamesInputSchema).optional(),
-  genres: z.lazy(() => GenreCreateNestedManyWithoutGamesInputSchema).optional(),
-  publisher: z.lazy(() => PublisherCreateNestedOneWithoutGamesInputSchema),
-  tags: z.lazy(() => TagCreateNestedManyWithoutGamesInputSchema).optional()
-}).strict();
-
-export const GameUncheckedCreateWithoutDeveloperInputSchema: z.ZodType<Prisma.GameUncheckedCreateWithoutDeveloperInput> = z.object({
-  id: z.string().cuid().optional(),
-  slug: z.string(),
-  name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
-  description: z.string().optional().nullable(),
-  releaseDate: z.coerce.date(),
-  imageUrl: z.string().optional().nullable(),
-  rating: z.number(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  publisherId: z.string(),
-  platforms: z.lazy(() => PlatformUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
-  genres: z.lazy(() => GenreUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
-  tags: z.lazy(() => TagUncheckedCreateNestedManyWithoutGamesInputSchema).optional()
-}).strict();
-
-export const GameCreateOrConnectWithoutDeveloperInputSchema: z.ZodType<Prisma.GameCreateOrConnectWithoutDeveloperInput> = z.object({
-  where: z.lazy(() => GameWhereUniqueInputSchema),
-  create: z.union([ z.lazy(() => GameCreateWithoutDeveloperInputSchema),z.lazy(() => GameUncheckedCreateWithoutDeveloperInputSchema) ]),
-}).strict();
-
-export const GameCreateManyDeveloperInputEnvelopeSchema: z.ZodType<Prisma.GameCreateManyDeveloperInputEnvelope> = z.object({
-  data: z.union([ z.lazy(() => GameCreateManyDeveloperInputSchema),z.lazy(() => GameCreateManyDeveloperInputSchema).array() ]),
-  skipDuplicates: z.boolean().optional()
-}).strict();
-
-export const GameUpsertWithWhereUniqueWithoutDeveloperInputSchema: z.ZodType<Prisma.GameUpsertWithWhereUniqueWithoutDeveloperInput> = z.object({
-  where: z.lazy(() => GameWhereUniqueInputSchema),
-  update: z.union([ z.lazy(() => GameUpdateWithoutDeveloperInputSchema),z.lazy(() => GameUncheckedUpdateWithoutDeveloperInputSchema) ]),
-  create: z.union([ z.lazy(() => GameCreateWithoutDeveloperInputSchema),z.lazy(() => GameUncheckedCreateWithoutDeveloperInputSchema) ]),
-}).strict();
-
-export const GameUpdateWithWhereUniqueWithoutDeveloperInputSchema: z.ZodType<Prisma.GameUpdateWithWhereUniqueWithoutDeveloperInput> = z.object({
-  where: z.lazy(() => GameWhereUniqueInputSchema),
-  data: z.union([ z.lazy(() => GameUpdateWithoutDeveloperInputSchema),z.lazy(() => GameUncheckedUpdateWithoutDeveloperInputSchema) ]),
-}).strict();
-
-export const GameUpdateManyWithWhereWithoutDeveloperInputSchema: z.ZodType<Prisma.GameUpdateManyWithWhereWithoutDeveloperInput> = z.object({
-  where: z.lazy(() => GameScalarWhereInputSchema),
-  data: z.union([ z.lazy(() => GameUpdateManyMutationInputSchema),z.lazy(() => GameUncheckedUpdateManyWithoutDeveloperInputSchema) ]),
-}).strict();
-
-export const GameCreateWithoutPublisherInputSchema: z.ZodType<Prisma.GameCreateWithoutPublisherInput> = z.object({
-  id: z.string().cuid().optional(),
-  slug: z.string(),
-  name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
-  description: z.string().optional().nullable(),
-  releaseDate: z.coerce.date(),
-  imageUrl: z.string().optional().nullable(),
-  rating: z.number(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  platforms: z.lazy(() => PlatformCreateNestedManyWithoutGamesInputSchema).optional(),
-  genres: z.lazy(() => GenreCreateNestedManyWithoutGamesInputSchema).optional(),
-  developer: z.lazy(() => DeveloperCreateNestedOneWithoutGamesInputSchema),
-  tags: z.lazy(() => TagCreateNestedManyWithoutGamesInputSchema).optional()
-}).strict();
-
-export const GameUncheckedCreateWithoutPublisherInputSchema: z.ZodType<Prisma.GameUncheckedCreateWithoutPublisherInput> = z.object({
-  id: z.string().cuid().optional(),
-  slug: z.string(),
-  name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
-  description: z.string().optional().nullable(),
-  releaseDate: z.coerce.date(),
-  imageUrl: z.string().optional().nullable(),
-  rating: z.number(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  developerId: z.string(),
-  platforms: z.lazy(() => PlatformUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
-  genres: z.lazy(() => GenreUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
-  tags: z.lazy(() => TagUncheckedCreateNestedManyWithoutGamesInputSchema).optional()
-}).strict();
-
-export const GameCreateOrConnectWithoutPublisherInputSchema: z.ZodType<Prisma.GameCreateOrConnectWithoutPublisherInput> = z.object({
-  where: z.lazy(() => GameWhereUniqueInputSchema),
-  create: z.union([ z.lazy(() => GameCreateWithoutPublisherInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublisherInputSchema) ]),
-}).strict();
-
-export const GameCreateManyPublisherInputEnvelopeSchema: z.ZodType<Prisma.GameCreateManyPublisherInputEnvelope> = z.object({
-  data: z.union([ z.lazy(() => GameCreateManyPublisherInputSchema),z.lazy(() => GameCreateManyPublisherInputSchema).array() ]),
-  skipDuplicates: z.boolean().optional()
-}).strict();
-
-export const GameUpsertWithWhereUniqueWithoutPublisherInputSchema: z.ZodType<Prisma.GameUpsertWithWhereUniqueWithoutPublisherInput> = z.object({
-  where: z.lazy(() => GameWhereUniqueInputSchema),
-  update: z.union([ z.lazy(() => GameUpdateWithoutPublisherInputSchema),z.lazy(() => GameUncheckedUpdateWithoutPublisherInputSchema) ]),
-  create: z.union([ z.lazy(() => GameCreateWithoutPublisherInputSchema),z.lazy(() => GameUncheckedCreateWithoutPublisherInputSchema) ]),
-}).strict();
-
-export const GameUpdateWithWhereUniqueWithoutPublisherInputSchema: z.ZodType<Prisma.GameUpdateWithWhereUniqueWithoutPublisherInput> = z.object({
-  where: z.lazy(() => GameWhereUniqueInputSchema),
-  data: z.union([ z.lazy(() => GameUpdateWithoutPublisherInputSchema),z.lazy(() => GameUncheckedUpdateWithoutPublisherInputSchema) ]),
-}).strict();
-
-export const GameUpdateManyWithWhereWithoutPublisherInputSchema: z.ZodType<Prisma.GameUpdateManyWithWhereWithoutPublisherInput> = z.object({
-  where: z.lazy(() => GameScalarWhereInputSchema),
-  data: z.union([ z.lazy(() => GameUpdateManyMutationInputSchema),z.lazy(() => GameUncheckedUpdateManyWithoutPublisherInputSchema) ]),
-}).strict();
-
 export const GameCreateWithoutTagsInputSchema: z.ZodType<Prisma.GameCreateWithoutTagsInput> = z.object({
   id: z.string().cuid().optional(),
   slug: z.string(),
   name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
   description: z.string().optional().nullable(),
   releaseDate: z.coerce.date(),
   imageUrl: z.string().optional().nullable(),
   rating: z.number(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
+  developers: z.lazy(() => DeveloperCreateNestedManyWithoutGamesInputSchema).optional(),
+  publishers: z.lazy(() => PublisherCreateNestedManyWithoutGamesInputSchema).optional(),
   platforms: z.lazy(() => PlatformCreateNestedManyWithoutGamesInputSchema).optional(),
-  genres: z.lazy(() => GenreCreateNestedManyWithoutGamesInputSchema).optional(),
-  developer: z.lazy(() => DeveloperCreateNestedOneWithoutGamesInputSchema),
-  publisher: z.lazy(() => PublisherCreateNestedOneWithoutGamesInputSchema)
+  genres: z.lazy(() => GenreCreateNestedManyWithoutGamesInputSchema).optional()
 }).strict();
 
 export const GameUncheckedCreateWithoutTagsInputSchema: z.ZodType<Prisma.GameUncheckedCreateWithoutTagsInput> = z.object({
   id: z.string().cuid().optional(),
   slug: z.string(),
   name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
+  price: z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
   description: z.string().optional().nullable(),
   releaseDate: z.coerce.date(),
   imageUrl: z.string().optional().nullable(),
   rating: z.number(),
   createdAt: z.coerce.date().optional(),
   updatedAt: z.coerce.date().optional(),
-  developerId: z.string(),
-  publisherId: z.string(),
+  developers: z.lazy(() => DeveloperUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
   platforms: z.lazy(() => PlatformUncheckedCreateNestedManyWithoutGamesInputSchema).optional(),
   genres: z.lazy(() => GenreUncheckedCreateNestedManyWithoutGamesInputSchema).optional()
 }).strict();
@@ -2366,65 +2489,204 @@ export const GameUpdateManyWithWhereWithoutTagsInputSchema: z.ZodType<Prisma.Gam
   data: z.union([ z.lazy(() => GameUpdateManyMutationInputSchema),z.lazy(() => GameUncheckedUpdateManyWithoutTagsInputSchema) ]),
 }).strict();
 
+export const DeveloperUpdateWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUpdateWithoutGamesInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const DeveloperUncheckedUpdateWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUncheckedUpdateWithoutGamesInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const DeveloperUncheckedUpdateManyWithoutGamesInputSchema: z.ZodType<Prisma.DeveloperUncheckedUpdateManyWithoutGamesInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const PublisherUpdateWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUpdateWithoutGamesInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const PublisherUncheckedUpdateWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUncheckedUpdateWithoutGamesInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const PublisherUncheckedUpdateManyWithoutGamesInputSchema: z.ZodType<Prisma.PublisherUncheckedUpdateManyWithoutGamesInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
 export const PlatformUpdateWithoutGamesInputSchema: z.ZodType<Prisma.PlatformUpdateWithoutGamesInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const PlatformUncheckedUpdateWithoutGamesInputSchema: z.ZodType<Prisma.PlatformUncheckedUpdateWithoutGamesInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const PlatformUncheckedUpdateManyWithoutGamesInputSchema: z.ZodType<Prisma.PlatformUncheckedUpdateManyWithoutGamesInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const GenreUpdateWithoutGamesInputSchema: z.ZodType<Prisma.GenreUpdateWithoutGamesInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const GenreUncheckedUpdateWithoutGamesInputSchema: z.ZodType<Prisma.GenreUncheckedUpdateWithoutGamesInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const GenreUncheckedUpdateManyWithoutGamesInputSchema: z.ZodType<Prisma.GenreUncheckedUpdateManyWithoutGamesInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const TagUpdateWithoutGamesInputSchema: z.ZodType<Prisma.TagUpdateWithoutGamesInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const TagUncheckedUpdateWithoutGamesInputSchema: z.ZodType<Prisma.TagUncheckedUpdateWithoutGamesInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const TagUncheckedUpdateManyWithoutGamesInputSchema: z.ZodType<Prisma.TagUncheckedUpdateManyWithoutGamesInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
-export const GameUpdateWithoutPlatformsInputSchema: z.ZodType<Prisma.GameUpdateWithoutPlatformsInput> = z.object({
+export const GameUpdateWithoutDevelopersInputSchema: z.ZodType<Prisma.GameUpdateWithoutDevelopersInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  publishers: z.lazy(() => PublisherUpdateManyWithoutGamesNestedInputSchema).optional(),
+  platforms: z.lazy(() => PlatformUpdateManyWithoutGamesNestedInputSchema).optional(),
   genres: z.lazy(() => GenreUpdateManyWithoutGamesNestedInputSchema).optional(),
-  developer: z.lazy(() => DeveloperUpdateOneRequiredWithoutGamesNestedInputSchema).optional(),
-  publisher: z.lazy(() => PublisherUpdateOneRequiredWithoutGamesNestedInputSchema).optional(),
+  tags: z.lazy(() => TagUpdateManyWithoutGamesNestedInputSchema).optional()
+}).strict();
+
+export const GameUncheckedUpdateWithoutDevelopersInputSchema: z.ZodType<Prisma.GameUncheckedUpdateWithoutDevelopersInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  publishers: z.lazy(() => PublisherUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
+  platforms: z.lazy(() => PlatformUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
+  genres: z.lazy(() => GenreUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
+  tags: z.lazy(() => TagUncheckedUpdateManyWithoutGamesNestedInputSchema).optional()
+}).strict();
+
+export const GameUncheckedUpdateManyWithoutDevelopersInputSchema: z.ZodType<Prisma.GameUncheckedUpdateManyWithoutDevelopersInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const GameUpdateWithoutPublishersInputSchema: z.ZodType<Prisma.GameUpdateWithoutPublishersInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  developers: z.lazy(() => DeveloperUpdateManyWithoutGamesNestedInputSchema).optional(),
+  platforms: z.lazy(() => PlatformUpdateManyWithoutGamesNestedInputSchema).optional(),
+  genres: z.lazy(() => GenreUpdateManyWithoutGamesNestedInputSchema).optional(),
+  tags: z.lazy(() => TagUpdateManyWithoutGamesNestedInputSchema).optional()
+}).strict();
+
+export const GameUncheckedUpdateWithoutPublishersInputSchema: z.ZodType<Prisma.GameUncheckedUpdateWithoutPublishersInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  developers: z.lazy(() => DeveloperUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
+  platforms: z.lazy(() => PlatformUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
+  genres: z.lazy(() => GenreUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
+  tags: z.lazy(() => TagUncheckedUpdateManyWithoutGamesNestedInputSchema).optional()
+}).strict();
+
+export const GameUncheckedUpdateManyWithoutPublishersInputSchema: z.ZodType<Prisma.GameUncheckedUpdateManyWithoutPublishersInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+}).strict();
+
+export const GameUpdateWithoutPlatformsInputSchema: z.ZodType<Prisma.GameUpdateWithoutPlatformsInput> = z.object({
+  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
+  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
+  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  developers: z.lazy(() => DeveloperUpdateManyWithoutGamesNestedInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUpdateManyWithoutGamesNestedInputSchema).optional(),
+  genres: z.lazy(() => GenreUpdateManyWithoutGamesNestedInputSchema).optional(),
   tags: z.lazy(() => TagUpdateManyWithoutGamesNestedInputSchema).optional()
 }).strict();
 
@@ -2432,15 +2694,15 @@ export const GameUncheckedUpdateWithoutPlatformsInputSchema: z.ZodType<Prisma.Ga
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  developerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  publisherId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  developers: z.lazy(() => DeveloperUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
   genres: z.lazy(() => GenreUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
   tags: z.lazy(() => TagUncheckedUpdateManyWithoutGamesNestedInputSchema).optional()
 }).strict();
@@ -2449,31 +2711,29 @@ export const GameUncheckedUpdateManyWithoutPlatformsInputSchema: z.ZodType<Prism
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  developerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  publisherId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const GameUpdateWithoutGenresInputSchema: z.ZodType<Prisma.GameUpdateWithoutGenresInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  developers: z.lazy(() => DeveloperUpdateManyWithoutGamesNestedInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUpdateManyWithoutGamesNestedInputSchema).optional(),
   platforms: z.lazy(() => PlatformUpdateManyWithoutGamesNestedInputSchema).optional(),
-  developer: z.lazy(() => DeveloperUpdateOneRequiredWithoutGamesNestedInputSchema).optional(),
-  publisher: z.lazy(() => PublisherUpdateOneRequiredWithoutGamesNestedInputSchema).optional(),
   tags: z.lazy(() => TagUpdateManyWithoutGamesNestedInputSchema).optional()
 }).strict();
 
@@ -2481,15 +2741,15 @@ export const GameUncheckedUpdateWithoutGenresInputSchema: z.ZodType<Prisma.GameU
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  developerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  publisherId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  developers: z.lazy(() => DeveloperUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
   platforms: z.lazy(() => PlatformUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
   tags: z.lazy(() => TagUncheckedUpdateManyWithoutGamesNestedInputSchema).optional()
 }).strict();
@@ -2498,171 +2758,45 @@ export const GameUncheckedUpdateManyWithoutGenresInputSchema: z.ZodType<Prisma.G
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  developerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  publisherId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const GameCreateManyDeveloperInputSchema: z.ZodType<Prisma.GameCreateManyDeveloperInput> = z.object({
-  id: z.string().cuid().optional(),
-  slug: z.string(),
-  name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
-  description: z.string().optional().nullable(),
-  releaseDate: z.coerce.date(),
-  imageUrl: z.string().optional().nullable(),
-  rating: z.number(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  publisherId: z.string()
-}).strict();
-
-export const GameUpdateWithoutDeveloperInputSchema: z.ZodType<Prisma.GameUpdateWithoutDeveloperInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
-  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  platforms: z.lazy(() => PlatformUpdateManyWithoutGamesNestedInputSchema).optional(),
-  genres: z.lazy(() => GenreUpdateManyWithoutGamesNestedInputSchema).optional(),
-  publisher: z.lazy(() => PublisherUpdateOneRequiredWithoutGamesNestedInputSchema).optional(),
-  tags: z.lazy(() => TagUpdateManyWithoutGamesNestedInputSchema).optional()
-}).strict();
-
-export const GameUncheckedUpdateWithoutDeveloperInputSchema: z.ZodType<Prisma.GameUncheckedUpdateWithoutDeveloperInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
-  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  publisherId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  platforms: z.lazy(() => PlatformUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
-  genres: z.lazy(() => GenreUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
-  tags: z.lazy(() => TagUncheckedUpdateManyWithoutGamesNestedInputSchema).optional()
-}).strict();
-
-export const GameUncheckedUpdateManyWithoutDeveloperInputSchema: z.ZodType<Prisma.GameUncheckedUpdateManyWithoutDeveloperInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
-  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  publisherId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-}).strict();
-
-export const GameCreateManyPublisherInputSchema: z.ZodType<Prisma.GameCreateManyPublisherInput> = z.object({
-  id: z.string().cuid().optional(),
-  slug: z.string(),
-  name: z.string(),
-  price: z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),
-  description: z.string().optional().nullable(),
-  releaseDate: z.coerce.date(),
-  imageUrl: z.string().optional().nullable(),
-  rating: z.number(),
-  createdAt: z.coerce.date().optional(),
-  updatedAt: z.coerce.date().optional(),
-  developerId: z.string()
-}).strict();
-
-export const GameUpdateWithoutPublisherInputSchema: z.ZodType<Prisma.GameUpdateWithoutPublisherInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
-  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  platforms: z.lazy(() => PlatformUpdateManyWithoutGamesNestedInputSchema).optional(),
-  genres: z.lazy(() => GenreUpdateManyWithoutGamesNestedInputSchema).optional(),
-  developer: z.lazy(() => DeveloperUpdateOneRequiredWithoutGamesNestedInputSchema).optional(),
-  tags: z.lazy(() => TagUpdateManyWithoutGamesNestedInputSchema).optional()
-}).strict();
-
-export const GameUncheckedUpdateWithoutPublisherInputSchema: z.ZodType<Prisma.GameUncheckedUpdateWithoutPublisherInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
-  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  developerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  platforms: z.lazy(() => PlatformUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
-  genres: z.lazy(() => GenreUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
-  tags: z.lazy(() => TagUncheckedUpdateManyWithoutGamesNestedInputSchema).optional()
-}).strict();
-
-export const GameUncheckedUpdateManyWithoutPublisherInputSchema: z.ZodType<Prisma.GameUncheckedUpdateManyWithoutPublisherInput> = z.object({
-  id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
-  description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
-  rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
-  createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  developerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 export const GameUpdateWithoutTagsInputSchema: z.ZodType<Prisma.GameUpdateWithoutTagsInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
+  developers: z.lazy(() => DeveloperUpdateManyWithoutGamesNestedInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUpdateManyWithoutGamesNestedInputSchema).optional(),
   platforms: z.lazy(() => PlatformUpdateManyWithoutGamesNestedInputSchema).optional(),
-  genres: z.lazy(() => GenreUpdateManyWithoutGamesNestedInputSchema).optional(),
-  developer: z.lazy(() => DeveloperUpdateOneRequiredWithoutGamesNestedInputSchema).optional(),
-  publisher: z.lazy(() => PublisherUpdateOneRequiredWithoutGamesNestedInputSchema).optional()
+  genres: z.lazy(() => GenreUpdateManyWithoutGamesNestedInputSchema).optional()
 }).strict();
 
 export const GameUncheckedUpdateWithoutTagsInputSchema: z.ZodType<Prisma.GameUncheckedUpdateWithoutTagsInput> = z.object({
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  developerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  publisherId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
+  developers: z.lazy(() => DeveloperUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
+  publishers: z.lazy(() => PublisherUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
   platforms: z.lazy(() => PlatformUncheckedUpdateManyWithoutGamesNestedInputSchema).optional(),
   genres: z.lazy(() => GenreUncheckedUpdateManyWithoutGamesNestedInputSchema).optional()
 }).strict();
@@ -2671,15 +2805,13 @@ export const GameUncheckedUpdateManyWithoutTagsInputSchema: z.ZodType<Prisma.Gam
   id: z.union([ z.string().cuid(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   slug: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
   name: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
+  price: z.union([ z.union([z.number(),z.string(),z.instanceof(Decimal),z.instanceof(Prisma.Decimal),DecimalJsLikeSchema,]).refine((v) => isValidDecimalInput(v), { message: 'Must be a Decimal' }),z.lazy(() => DecimalFieldUpdateOperationsInputSchema) ]).optional(),
   description: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   releaseDate: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   imageUrl: z.union([ z.string(),z.lazy(() => NullableStringFieldUpdateOperationsInputSchema) ]).optional().nullable(),
   rating: z.union([ z.number(),z.lazy(() => FloatFieldUpdateOperationsInputSchema) ]).optional(),
   createdAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
   updatedAt: z.union([ z.coerce.date(),z.lazy(() => DateTimeFieldUpdateOperationsInputSchema) ]).optional(),
-  developerId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
-  publisherId: z.union([ z.string(),z.lazy(() => StringFieldUpdateOperationsInputSchema) ]).optional(),
 }).strict();
 
 /////////////////////////////////////////
@@ -2746,130 +2878,6 @@ export const GameFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.GameFindUniqueOrT
   select: GameSelectSchema.optional(),
   include: GameIncludeSchema.optional(),
   where: GameWhereUniqueInputSchema,
-}).strict() ;
-
-export const PlatformFindFirstArgsSchema: z.ZodType<Prisma.PlatformFindFirstArgs> = z.object({
-  select: PlatformSelectSchema.optional(),
-  include: PlatformIncludeSchema.optional(),
-  where: PlatformWhereInputSchema.optional(),
-  orderBy: z.union([ PlatformOrderByWithRelationInputSchema.array(),PlatformOrderByWithRelationInputSchema ]).optional(),
-  cursor: PlatformWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-  distinct: z.union([ PlatformScalarFieldEnumSchema,PlatformScalarFieldEnumSchema.array() ]).optional(),
-}).strict() ;
-
-export const PlatformFindFirstOrThrowArgsSchema: z.ZodType<Prisma.PlatformFindFirstOrThrowArgs> = z.object({
-  select: PlatformSelectSchema.optional(),
-  include: PlatformIncludeSchema.optional(),
-  where: PlatformWhereInputSchema.optional(),
-  orderBy: z.union([ PlatformOrderByWithRelationInputSchema.array(),PlatformOrderByWithRelationInputSchema ]).optional(),
-  cursor: PlatformWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-  distinct: z.union([ PlatformScalarFieldEnumSchema,PlatformScalarFieldEnumSchema.array() ]).optional(),
-}).strict() ;
-
-export const PlatformFindManyArgsSchema: z.ZodType<Prisma.PlatformFindManyArgs> = z.object({
-  select: PlatformSelectSchema.optional(),
-  include: PlatformIncludeSchema.optional(),
-  where: PlatformWhereInputSchema.optional(),
-  orderBy: z.union([ PlatformOrderByWithRelationInputSchema.array(),PlatformOrderByWithRelationInputSchema ]).optional(),
-  cursor: PlatformWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-  distinct: z.union([ PlatformScalarFieldEnumSchema,PlatformScalarFieldEnumSchema.array() ]).optional(),
-}).strict() ;
-
-export const PlatformAggregateArgsSchema: z.ZodType<Prisma.PlatformAggregateArgs> = z.object({
-  where: PlatformWhereInputSchema.optional(),
-  orderBy: z.union([ PlatformOrderByWithRelationInputSchema.array(),PlatformOrderByWithRelationInputSchema ]).optional(),
-  cursor: PlatformWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-}).strict() ;
-
-export const PlatformGroupByArgsSchema: z.ZodType<Prisma.PlatformGroupByArgs> = z.object({
-  where: PlatformWhereInputSchema.optional(),
-  orderBy: z.union([ PlatformOrderByWithAggregationInputSchema.array(),PlatformOrderByWithAggregationInputSchema ]).optional(),
-  by: PlatformScalarFieldEnumSchema.array(),
-  having: PlatformScalarWhereWithAggregatesInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-}).strict() ;
-
-export const PlatformFindUniqueArgsSchema: z.ZodType<Prisma.PlatformFindUniqueArgs> = z.object({
-  select: PlatformSelectSchema.optional(),
-  include: PlatformIncludeSchema.optional(),
-  where: PlatformWhereUniqueInputSchema,
-}).strict() ;
-
-export const PlatformFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.PlatformFindUniqueOrThrowArgs> = z.object({
-  select: PlatformSelectSchema.optional(),
-  include: PlatformIncludeSchema.optional(),
-  where: PlatformWhereUniqueInputSchema,
-}).strict() ;
-
-export const GenreFindFirstArgsSchema: z.ZodType<Prisma.GenreFindFirstArgs> = z.object({
-  select: GenreSelectSchema.optional(),
-  include: GenreIncludeSchema.optional(),
-  where: GenreWhereInputSchema.optional(),
-  orderBy: z.union([ GenreOrderByWithRelationInputSchema.array(),GenreOrderByWithRelationInputSchema ]).optional(),
-  cursor: GenreWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-  distinct: z.union([ GenreScalarFieldEnumSchema,GenreScalarFieldEnumSchema.array() ]).optional(),
-}).strict() ;
-
-export const GenreFindFirstOrThrowArgsSchema: z.ZodType<Prisma.GenreFindFirstOrThrowArgs> = z.object({
-  select: GenreSelectSchema.optional(),
-  include: GenreIncludeSchema.optional(),
-  where: GenreWhereInputSchema.optional(),
-  orderBy: z.union([ GenreOrderByWithRelationInputSchema.array(),GenreOrderByWithRelationInputSchema ]).optional(),
-  cursor: GenreWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-  distinct: z.union([ GenreScalarFieldEnumSchema,GenreScalarFieldEnumSchema.array() ]).optional(),
-}).strict() ;
-
-export const GenreFindManyArgsSchema: z.ZodType<Prisma.GenreFindManyArgs> = z.object({
-  select: GenreSelectSchema.optional(),
-  include: GenreIncludeSchema.optional(),
-  where: GenreWhereInputSchema.optional(),
-  orderBy: z.union([ GenreOrderByWithRelationInputSchema.array(),GenreOrderByWithRelationInputSchema ]).optional(),
-  cursor: GenreWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-  distinct: z.union([ GenreScalarFieldEnumSchema,GenreScalarFieldEnumSchema.array() ]).optional(),
-}).strict() ;
-
-export const GenreAggregateArgsSchema: z.ZodType<Prisma.GenreAggregateArgs> = z.object({
-  where: GenreWhereInputSchema.optional(),
-  orderBy: z.union([ GenreOrderByWithRelationInputSchema.array(),GenreOrderByWithRelationInputSchema ]).optional(),
-  cursor: GenreWhereUniqueInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-}).strict() ;
-
-export const GenreGroupByArgsSchema: z.ZodType<Prisma.GenreGroupByArgs> = z.object({
-  where: GenreWhereInputSchema.optional(),
-  orderBy: z.union([ GenreOrderByWithAggregationInputSchema.array(),GenreOrderByWithAggregationInputSchema ]).optional(),
-  by: GenreScalarFieldEnumSchema.array(),
-  having: GenreScalarWhereWithAggregatesInputSchema.optional(),
-  take: z.number().optional(),
-  skip: z.number().optional(),
-}).strict() ;
-
-export const GenreFindUniqueArgsSchema: z.ZodType<Prisma.GenreFindUniqueArgs> = z.object({
-  select: GenreSelectSchema.optional(),
-  include: GenreIncludeSchema.optional(),
-  where: GenreWhereUniqueInputSchema,
-}).strict() ;
-
-export const GenreFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.GenreFindUniqueOrThrowArgs> = z.object({
-  select: GenreSelectSchema.optional(),
-  include: GenreIncludeSchema.optional(),
-  where: GenreWhereUniqueInputSchema,
 }).strict() ;
 
 export const DeveloperFindFirstArgsSchema: z.ZodType<Prisma.DeveloperFindFirstArgs> = z.object({
@@ -2996,6 +3004,130 @@ export const PublisherFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.PublisherFin
   where: PublisherWhereUniqueInputSchema,
 }).strict() ;
 
+export const PlatformFindFirstArgsSchema: z.ZodType<Prisma.PlatformFindFirstArgs> = z.object({
+  select: PlatformSelectSchema.optional(),
+  include: PlatformIncludeSchema.optional(),
+  where: PlatformWhereInputSchema.optional(),
+  orderBy: z.union([ PlatformOrderByWithRelationInputSchema.array(),PlatformOrderByWithRelationInputSchema ]).optional(),
+  cursor: PlatformWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ PlatformScalarFieldEnumSchema,PlatformScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const PlatformFindFirstOrThrowArgsSchema: z.ZodType<Prisma.PlatformFindFirstOrThrowArgs> = z.object({
+  select: PlatformSelectSchema.optional(),
+  include: PlatformIncludeSchema.optional(),
+  where: PlatformWhereInputSchema.optional(),
+  orderBy: z.union([ PlatformOrderByWithRelationInputSchema.array(),PlatformOrderByWithRelationInputSchema ]).optional(),
+  cursor: PlatformWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ PlatformScalarFieldEnumSchema,PlatformScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const PlatformFindManyArgsSchema: z.ZodType<Prisma.PlatformFindManyArgs> = z.object({
+  select: PlatformSelectSchema.optional(),
+  include: PlatformIncludeSchema.optional(),
+  where: PlatformWhereInputSchema.optional(),
+  orderBy: z.union([ PlatformOrderByWithRelationInputSchema.array(),PlatformOrderByWithRelationInputSchema ]).optional(),
+  cursor: PlatformWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ PlatformScalarFieldEnumSchema,PlatformScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const PlatformAggregateArgsSchema: z.ZodType<Prisma.PlatformAggregateArgs> = z.object({
+  where: PlatformWhereInputSchema.optional(),
+  orderBy: z.union([ PlatformOrderByWithRelationInputSchema.array(),PlatformOrderByWithRelationInputSchema ]).optional(),
+  cursor: PlatformWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict() ;
+
+export const PlatformGroupByArgsSchema: z.ZodType<Prisma.PlatformGroupByArgs> = z.object({
+  where: PlatformWhereInputSchema.optional(),
+  orderBy: z.union([ PlatformOrderByWithAggregationInputSchema.array(),PlatformOrderByWithAggregationInputSchema ]).optional(),
+  by: PlatformScalarFieldEnumSchema.array(),
+  having: PlatformScalarWhereWithAggregatesInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict() ;
+
+export const PlatformFindUniqueArgsSchema: z.ZodType<Prisma.PlatformFindUniqueArgs> = z.object({
+  select: PlatformSelectSchema.optional(),
+  include: PlatformIncludeSchema.optional(),
+  where: PlatformWhereUniqueInputSchema,
+}).strict() ;
+
+export const PlatformFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.PlatformFindUniqueOrThrowArgs> = z.object({
+  select: PlatformSelectSchema.optional(),
+  include: PlatformIncludeSchema.optional(),
+  where: PlatformWhereUniqueInputSchema,
+}).strict() ;
+
+export const GenreFindFirstArgsSchema: z.ZodType<Prisma.GenreFindFirstArgs> = z.object({
+  select: GenreSelectSchema.optional(),
+  include: GenreIncludeSchema.optional(),
+  where: GenreWhereInputSchema.optional(),
+  orderBy: z.union([ GenreOrderByWithRelationInputSchema.array(),GenreOrderByWithRelationInputSchema ]).optional(),
+  cursor: GenreWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ GenreScalarFieldEnumSchema,GenreScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const GenreFindFirstOrThrowArgsSchema: z.ZodType<Prisma.GenreFindFirstOrThrowArgs> = z.object({
+  select: GenreSelectSchema.optional(),
+  include: GenreIncludeSchema.optional(),
+  where: GenreWhereInputSchema.optional(),
+  orderBy: z.union([ GenreOrderByWithRelationInputSchema.array(),GenreOrderByWithRelationInputSchema ]).optional(),
+  cursor: GenreWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ GenreScalarFieldEnumSchema,GenreScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const GenreFindManyArgsSchema: z.ZodType<Prisma.GenreFindManyArgs> = z.object({
+  select: GenreSelectSchema.optional(),
+  include: GenreIncludeSchema.optional(),
+  where: GenreWhereInputSchema.optional(),
+  orderBy: z.union([ GenreOrderByWithRelationInputSchema.array(),GenreOrderByWithRelationInputSchema ]).optional(),
+  cursor: GenreWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+  distinct: z.union([ GenreScalarFieldEnumSchema,GenreScalarFieldEnumSchema.array() ]).optional(),
+}).strict() ;
+
+export const GenreAggregateArgsSchema: z.ZodType<Prisma.GenreAggregateArgs> = z.object({
+  where: GenreWhereInputSchema.optional(),
+  orderBy: z.union([ GenreOrderByWithRelationInputSchema.array(),GenreOrderByWithRelationInputSchema ]).optional(),
+  cursor: GenreWhereUniqueInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict() ;
+
+export const GenreGroupByArgsSchema: z.ZodType<Prisma.GenreGroupByArgs> = z.object({
+  where: GenreWhereInputSchema.optional(),
+  orderBy: z.union([ GenreOrderByWithAggregationInputSchema.array(),GenreOrderByWithAggregationInputSchema ]).optional(),
+  by: GenreScalarFieldEnumSchema.array(),
+  having: GenreScalarWhereWithAggregatesInputSchema.optional(),
+  take: z.number().optional(),
+  skip: z.number().optional(),
+}).strict() ;
+
+export const GenreFindUniqueArgsSchema: z.ZodType<Prisma.GenreFindUniqueArgs> = z.object({
+  select: GenreSelectSchema.optional(),
+  include: GenreIncludeSchema.optional(),
+  where: GenreWhereUniqueInputSchema,
+}).strict() ;
+
+export const GenreFindUniqueOrThrowArgsSchema: z.ZodType<Prisma.GenreFindUniqueOrThrowArgs> = z.object({
+  select: GenreSelectSchema.optional(),
+  include: GenreIncludeSchema.optional(),
+  where: GenreWhereUniqueInputSchema,
+}).strict() ;
+
 export const TagFindFirstArgsSchema: z.ZodType<Prisma.TagFindFirstArgs> = z.object({
   select: TagSelectSchema.optional(),
   include: TagIncludeSchema.optional(),
@@ -3104,98 +3236,6 @@ export const GameDeleteManyArgsSchema: z.ZodType<Prisma.GameDeleteManyArgs> = z.
   where: GameWhereInputSchema.optional(),
 }).strict() ;
 
-export const PlatformCreateArgsSchema: z.ZodType<Prisma.PlatformCreateArgs> = z.object({
-  select: PlatformSelectSchema.optional(),
-  include: PlatformIncludeSchema.optional(),
-  data: z.union([ PlatformCreateInputSchema,PlatformUncheckedCreateInputSchema ]),
-}).strict() ;
-
-export const PlatformUpsertArgsSchema: z.ZodType<Prisma.PlatformUpsertArgs> = z.object({
-  select: PlatformSelectSchema.optional(),
-  include: PlatformIncludeSchema.optional(),
-  where: PlatformWhereUniqueInputSchema,
-  create: z.union([ PlatformCreateInputSchema,PlatformUncheckedCreateInputSchema ]),
-  update: z.union([ PlatformUpdateInputSchema,PlatformUncheckedUpdateInputSchema ]),
-}).strict() ;
-
-export const PlatformCreateManyArgsSchema: z.ZodType<Prisma.PlatformCreateManyArgs> = z.object({
-  data: z.union([ PlatformCreateManyInputSchema,PlatformCreateManyInputSchema.array() ]),
-  skipDuplicates: z.boolean().optional(),
-}).strict() ;
-
-export const PlatformCreateManyAndReturnArgsSchema: z.ZodType<Prisma.PlatformCreateManyAndReturnArgs> = z.object({
-  data: z.union([ PlatformCreateManyInputSchema,PlatformCreateManyInputSchema.array() ]),
-  skipDuplicates: z.boolean().optional(),
-}).strict() ;
-
-export const PlatformDeleteArgsSchema: z.ZodType<Prisma.PlatformDeleteArgs> = z.object({
-  select: PlatformSelectSchema.optional(),
-  include: PlatformIncludeSchema.optional(),
-  where: PlatformWhereUniqueInputSchema,
-}).strict() ;
-
-export const PlatformUpdateArgsSchema: z.ZodType<Prisma.PlatformUpdateArgs> = z.object({
-  select: PlatformSelectSchema.optional(),
-  include: PlatformIncludeSchema.optional(),
-  data: z.union([ PlatformUpdateInputSchema,PlatformUncheckedUpdateInputSchema ]),
-  where: PlatformWhereUniqueInputSchema,
-}).strict() ;
-
-export const PlatformUpdateManyArgsSchema: z.ZodType<Prisma.PlatformUpdateManyArgs> = z.object({
-  data: z.union([ PlatformUpdateManyMutationInputSchema,PlatformUncheckedUpdateManyInputSchema ]),
-  where: PlatformWhereInputSchema.optional(),
-}).strict() ;
-
-export const PlatformDeleteManyArgsSchema: z.ZodType<Prisma.PlatformDeleteManyArgs> = z.object({
-  where: PlatformWhereInputSchema.optional(),
-}).strict() ;
-
-export const GenreCreateArgsSchema: z.ZodType<Prisma.GenreCreateArgs> = z.object({
-  select: GenreSelectSchema.optional(),
-  include: GenreIncludeSchema.optional(),
-  data: z.union([ GenreCreateInputSchema,GenreUncheckedCreateInputSchema ]),
-}).strict() ;
-
-export const GenreUpsertArgsSchema: z.ZodType<Prisma.GenreUpsertArgs> = z.object({
-  select: GenreSelectSchema.optional(),
-  include: GenreIncludeSchema.optional(),
-  where: GenreWhereUniqueInputSchema,
-  create: z.union([ GenreCreateInputSchema,GenreUncheckedCreateInputSchema ]),
-  update: z.union([ GenreUpdateInputSchema,GenreUncheckedUpdateInputSchema ]),
-}).strict() ;
-
-export const GenreCreateManyArgsSchema: z.ZodType<Prisma.GenreCreateManyArgs> = z.object({
-  data: z.union([ GenreCreateManyInputSchema,GenreCreateManyInputSchema.array() ]),
-  skipDuplicates: z.boolean().optional(),
-}).strict() ;
-
-export const GenreCreateManyAndReturnArgsSchema: z.ZodType<Prisma.GenreCreateManyAndReturnArgs> = z.object({
-  data: z.union([ GenreCreateManyInputSchema,GenreCreateManyInputSchema.array() ]),
-  skipDuplicates: z.boolean().optional(),
-}).strict() ;
-
-export const GenreDeleteArgsSchema: z.ZodType<Prisma.GenreDeleteArgs> = z.object({
-  select: GenreSelectSchema.optional(),
-  include: GenreIncludeSchema.optional(),
-  where: GenreWhereUniqueInputSchema,
-}).strict() ;
-
-export const GenreUpdateArgsSchema: z.ZodType<Prisma.GenreUpdateArgs> = z.object({
-  select: GenreSelectSchema.optional(),
-  include: GenreIncludeSchema.optional(),
-  data: z.union([ GenreUpdateInputSchema,GenreUncheckedUpdateInputSchema ]),
-  where: GenreWhereUniqueInputSchema,
-}).strict() ;
-
-export const GenreUpdateManyArgsSchema: z.ZodType<Prisma.GenreUpdateManyArgs> = z.object({
-  data: z.union([ GenreUpdateManyMutationInputSchema,GenreUncheckedUpdateManyInputSchema ]),
-  where: GenreWhereInputSchema.optional(),
-}).strict() ;
-
-export const GenreDeleteManyArgsSchema: z.ZodType<Prisma.GenreDeleteManyArgs> = z.object({
-  where: GenreWhereInputSchema.optional(),
-}).strict() ;
-
 export const DeveloperCreateArgsSchema: z.ZodType<Prisma.DeveloperCreateArgs> = z.object({
   select: DeveloperSelectSchema.optional(),
   include: DeveloperIncludeSchema.optional(),
@@ -3286,6 +3326,98 @@ export const PublisherUpdateManyArgsSchema: z.ZodType<Prisma.PublisherUpdateMany
 
 export const PublisherDeleteManyArgsSchema: z.ZodType<Prisma.PublisherDeleteManyArgs> = z.object({
   where: PublisherWhereInputSchema.optional(),
+}).strict() ;
+
+export const PlatformCreateArgsSchema: z.ZodType<Prisma.PlatformCreateArgs> = z.object({
+  select: PlatformSelectSchema.optional(),
+  include: PlatformIncludeSchema.optional(),
+  data: z.union([ PlatformCreateInputSchema,PlatformUncheckedCreateInputSchema ]),
+}).strict() ;
+
+export const PlatformUpsertArgsSchema: z.ZodType<Prisma.PlatformUpsertArgs> = z.object({
+  select: PlatformSelectSchema.optional(),
+  include: PlatformIncludeSchema.optional(),
+  where: PlatformWhereUniqueInputSchema,
+  create: z.union([ PlatformCreateInputSchema,PlatformUncheckedCreateInputSchema ]),
+  update: z.union([ PlatformUpdateInputSchema,PlatformUncheckedUpdateInputSchema ]),
+}).strict() ;
+
+export const PlatformCreateManyArgsSchema: z.ZodType<Prisma.PlatformCreateManyArgs> = z.object({
+  data: z.union([ PlatformCreateManyInputSchema,PlatformCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
+}).strict() ;
+
+export const PlatformCreateManyAndReturnArgsSchema: z.ZodType<Prisma.PlatformCreateManyAndReturnArgs> = z.object({
+  data: z.union([ PlatformCreateManyInputSchema,PlatformCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
+}).strict() ;
+
+export const PlatformDeleteArgsSchema: z.ZodType<Prisma.PlatformDeleteArgs> = z.object({
+  select: PlatformSelectSchema.optional(),
+  include: PlatformIncludeSchema.optional(),
+  where: PlatformWhereUniqueInputSchema,
+}).strict() ;
+
+export const PlatformUpdateArgsSchema: z.ZodType<Prisma.PlatformUpdateArgs> = z.object({
+  select: PlatformSelectSchema.optional(),
+  include: PlatformIncludeSchema.optional(),
+  data: z.union([ PlatformUpdateInputSchema,PlatformUncheckedUpdateInputSchema ]),
+  where: PlatformWhereUniqueInputSchema,
+}).strict() ;
+
+export const PlatformUpdateManyArgsSchema: z.ZodType<Prisma.PlatformUpdateManyArgs> = z.object({
+  data: z.union([ PlatformUpdateManyMutationInputSchema,PlatformUncheckedUpdateManyInputSchema ]),
+  where: PlatformWhereInputSchema.optional(),
+}).strict() ;
+
+export const PlatformDeleteManyArgsSchema: z.ZodType<Prisma.PlatformDeleteManyArgs> = z.object({
+  where: PlatformWhereInputSchema.optional(),
+}).strict() ;
+
+export const GenreCreateArgsSchema: z.ZodType<Prisma.GenreCreateArgs> = z.object({
+  select: GenreSelectSchema.optional(),
+  include: GenreIncludeSchema.optional(),
+  data: z.union([ GenreCreateInputSchema,GenreUncheckedCreateInputSchema ]),
+}).strict() ;
+
+export const GenreUpsertArgsSchema: z.ZodType<Prisma.GenreUpsertArgs> = z.object({
+  select: GenreSelectSchema.optional(),
+  include: GenreIncludeSchema.optional(),
+  where: GenreWhereUniqueInputSchema,
+  create: z.union([ GenreCreateInputSchema,GenreUncheckedCreateInputSchema ]),
+  update: z.union([ GenreUpdateInputSchema,GenreUncheckedUpdateInputSchema ]),
+}).strict() ;
+
+export const GenreCreateManyArgsSchema: z.ZodType<Prisma.GenreCreateManyArgs> = z.object({
+  data: z.union([ GenreCreateManyInputSchema,GenreCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
+}).strict() ;
+
+export const GenreCreateManyAndReturnArgsSchema: z.ZodType<Prisma.GenreCreateManyAndReturnArgs> = z.object({
+  data: z.union([ GenreCreateManyInputSchema,GenreCreateManyInputSchema.array() ]),
+  skipDuplicates: z.boolean().optional(),
+}).strict() ;
+
+export const GenreDeleteArgsSchema: z.ZodType<Prisma.GenreDeleteArgs> = z.object({
+  select: GenreSelectSchema.optional(),
+  include: GenreIncludeSchema.optional(),
+  where: GenreWhereUniqueInputSchema,
+}).strict() ;
+
+export const GenreUpdateArgsSchema: z.ZodType<Prisma.GenreUpdateArgs> = z.object({
+  select: GenreSelectSchema.optional(),
+  include: GenreIncludeSchema.optional(),
+  data: z.union([ GenreUpdateInputSchema,GenreUncheckedUpdateInputSchema ]),
+  where: GenreWhereUniqueInputSchema,
+}).strict() ;
+
+export const GenreUpdateManyArgsSchema: z.ZodType<Prisma.GenreUpdateManyArgs> = z.object({
+  data: z.union([ GenreUpdateManyMutationInputSchema,GenreUncheckedUpdateManyInputSchema ]),
+  where: GenreWhereInputSchema.optional(),
+}).strict() ;
+
+export const GenreDeleteManyArgsSchema: z.ZodType<Prisma.GenreDeleteManyArgs> = z.object({
+  where: GenreWhereInputSchema.optional(),
 }).strict() ;
 
 export const TagCreateArgsSchema: z.ZodType<Prisma.TagCreateArgs> = z.object({

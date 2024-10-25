@@ -1,10 +1,11 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["omitApi"]
 }
 
 generator dbml {
@@ -13,55 +14,61 @@ generator dbml {
 
 generator zod {
   provider = "zod-prisma-types"
-  output   = "./zod"  
+  output   = "./zod"
 }
 
 model Game {
-  id          String     @id @default(cuid())
-  slug        String     @unique
+  id String @id @default(cuid())
+
+  slug        String   @unique
   name        String
-  price       Decimal    @db.Money
-  description String?    @db.VarChar(1000)
+  price       Decimal  @db.Money
+  description String?  @db.VarChar(1000)
   releaseDate DateTime
-  imageUrl    String?    @db.VarChar(255)
-  rating      Float    
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  platforms   Platform[]
-  genres      Genre[]
-  developer   Developer @relation(fields: [developerId], references: [id])
-  developerId String
-  publisher   Publisher @relation(fields: [publisherId], references: [id])
-  publisherId String
-  tags        Tag[]
-}
+  imageUrl    String?  @db.VarChar(255)
+  rating      Float
 
-model Platform {
-  id    String @id @default(cuid())
-  name  String @unique
-  games Game[]
-}
+  developers Developer[]
+  publishers Publisher[]
+  platforms  Platform[]
+  genres     Genre[]
+  tags       Tag[]
 
-model Genre {
-  id    String @id @default(cuid())
-  name  String @unique
-  games Game[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Developer {
   id    String @id @default(cuid())
-  name  String @unique
+  slug  String @unique // nusantara-studio-1a2b3c
+  name  String // Nusantara Studio
   games Game[]
 }
 
 model Publisher {
   id    String @id @default(cuid())
-  name  String @unique
+  slug  String @unique
+  name  String
+  games Game[]
+}
+
+model Platform {
+  id    String @id @default(cuid())
+  slug  String @unique
+  name  String
+  games Game[]
+}
+
+model Genre {
+  id    String @id @default(cuid())
+  slug  String @unique
+  name  String
   games Game[]
 }
 
 model Tag {
   id    String @id @default(cuid())
-  name  String @unique
+  slug  String @unique
+  name  String
   games Game[]
 }
