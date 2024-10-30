@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import slugify from "slugify";
+import { z } from "zod";
 
 import { db } from "./db";
 import {
@@ -134,37 +135,53 @@ app.post("/games", zValidator("json", GameCreateInputSchema), async (c) => {
 });
 
 app.put(
-  "/games/edit/:slug",
-  zValidator("json", GameUpdateInputSchema),
+  "/games/:slug",
+  zValidator("param", z.object({ slug: z.string() })),
+  zValidator("json", GameCreateInputSchema),
   async (c) => {
-    const slug = c.req.param("slug");
-    const body = c.req.valid("json");
-
     try {
-      const game = await db.game.update({
-        where: { slug: slug },
-        data: body,
-        include: {
-          platforms: {
-            select: {
-              slug: true,
-              name: true,
-            },
-          },
-          genres: {
-            select: {
-              name: true,
-            },
-          },
-          tags: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      });
+      const { slug } = c.req.valid("param");
+      const body = c.req.valid("json");
+
+      // const game = await db.game.update({
+      //   where: { slug: slug },
+      //   data: body,
+      //   include: {
+      //     developers: {
+      //       select: {
+      //         slug: true,
+      //         name: true,
+      //       },
+      //     },
+      //     publishers: {
+      //       select: {
+      //         slug: true,
+      //         name: true,
+      //       },
+      //     },
+      //     image: true,
+      //     platforms: {
+      //       select: {
+      //         slug: true,
+      //         name: true,
+      //       },
+      //     },
+      //     genres: {
+      //       select: {
+      //         name: true,
+      //       },
+      //     },
+      //     tags: {
+      //       select: {
+      //         name: true,
+      //       },
+      //     },
+      //   },
+      // });
+
       return c.json(game);
     } catch (error) {
+      console.error("Error updating game:", error);
       return c.json({ message: "Game not found" }, 404);
     }
   }
