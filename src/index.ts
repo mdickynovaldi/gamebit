@@ -1,119 +1,173 @@
 import { Hono } from "hono";
-import {
-  CreateGameSchema,
-  dataGames as dataGamesInitial,
-  Game,
-  GameSchema,
-} from "./data/games";
-import { nanoid } from "nanoid";
 import { zValidator } from "@hono/zod-validator";
-import { format } from "date-fns";
-import { id as localeId } from "date-fns/locale";
 import slugify from "slugify";
 
-const app = new Hono();
+import { db } from "./db";
+import {
+  GameCreateInputSchema,
+  GameUpdateInputSchema,
+} from "../prisma/zod-prisma-types";
 
-let dataGames = structuredClone(dataGamesInitial);
+const app = new Hono();
 
 app.get("/", (c) => {
   return c.json(
     {
       message: "GameBit API",
-      endpoints: ["/", "/games", "/users"],
+      endpoints: ["/", "/games"],
     },
     200
   );
 });
 
-app.get("/games", (c) => {
-  const formattedGames = dataGames.map((game) => {
-    if (!game.releaseDate) {
-      return game;
-    }
-
-    const formatString = "EEEE, d MMMM yyyy";
-
-    return {
-      ...game,
-      releaseDates: [
-        {
-          lang: "en",
-          date: format(game.releaseDate, formatString),
+app.get("/games", async (c) => {
+  const games = await db.game.findMany({
+    include: {
+      platforms: {
+        select: {
+          slug: true,
+          name: true,
         },
-        {
-          lang: "id",
-          date: format(game.releaseDate, formatString, { locale: localeId }),
+      },
+      genres: {
+        select: {
+          name: true,
         },
-      ],
-    };
+      },
+      tags: {
+        select: {
+          name: true,
+        },
+      },
+    },
   });
-  return c.json(formattedGames, 200);
+  return c.json(games);
 });
 
-app.get("/games/:slug", (c) => {
-  const slug = c.req.param("slug").replace(/-/g, " ");
-  const game = dataGames.find(
-    (game) => game.name.toLowerCase() === slug.toLowerCase()
-  );
-
-  if (!game) {
-    return c.json({ message: "Game tidak ditemukan" }, 404);
-  }
-
-  return c.json(game, 200);
-});
-
-app.post("/games", zValidator("json", CreateGameSchema), (c) => {
-  try {
-    const gameData = c.req.valid("json");
-
-    const newGame: Game = {
-      ...gameData,
-      id: nanoid(),
-      slug: slugify(gameData.name),
-      releaseDate: new Date(gameData.releaseDate),
-      updatedAt: new Date(),
-    };
-
-    dataGames = [...dataGames, newGame];
-
-    return c.json({ message: "Game successfully added", game: newGame }, 201);
-  } catch (error) {
-    return c.json({ message: "Failed to add game", error: error }, 400);
-  }
-});
-
-app.put("/games/edit/:slug", zValidator("json", GameSchema), (c) => {
+app.get("/games/:slug", async (c) => {
   const slug = c.req.param("slug");
-  const gameData = c.req.valid("json");
 
-  const updatedGame = {
-    ...gameData,
-    updatedAt: new Date(),
-  };
-
-  dataGames = dataGames.map((game) => {
-    return game.slug === slug ? updatedGame : game;
+  const game = await db.game.findUnique({
+    where: { slug: slug },
+    include: {
+      platforms: {
+        select: {
+          slug: true,
+          name: true,
+        },
+      },
+      genres: {
+        select: {
+          name: true,
+        },
+      },
+      tags: {
+        select: {
+          name: true,
+        },
+      },
+    },
   });
 
-  return c.json(
-    { message: "Game successfully updated", game: updatedGame },
-    200
-  );
+  if (!game) return c.json({ message: "Game not found" }, 404);
+
+  return c.json(game);
 });
 
-app.delete("/games/:slug", (c) => {
-  const slug = c.req.param("slug").replace(/-/g, " ");
-  const gameIndex = dataGames.findIndex(
-    (game) => game.name.toLowerCase() === slug.toLowerCase()
-  );
+app.post("/games", zValidator("json", GameCreateInputSchema), async (c) => {
+  try {
+    const body = c.req.valid("json");
 
-  if (gameIndex === -1) {
+    const game = await db.game.create({
+      data: body,
+      include: {
+        developers: {
+          select: {
+            slug: true,
+            name: true,
+          },
+        },
+        publishers: {
+          select: {
+            slug: true,
+            name: true,
+          },
+        },
+        image: true,
+        platforms: {
+          select: {
+            slug: true,
+            name: true,
+          },
+        },
+        genres: {
+          select: {
+            name: true,
+          },
+        },
+        tags: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    return c.json(game, 201);
+  } catch (error) {
+    console.error("Error creating game:", error);
+    return c.json({ message: "Internal server error" }, 500);
+  }
+});
+
+app.put(
+  "/games/edit/:slug",
+  zValidator("json", GameUpdateInputSchema),
+  async (c) => {
+    const slug = c.req.param("slug");
+    const body = c.req.valid("json");
+
+    try {
+      const game = await db.game.update({
+        where: { slug: slug },
+        data: body,
+        include: {
+          platforms: {
+            select: {
+              slug: true,
+              name: true,
+            },
+          },
+          genres: {
+            select: {
+              name: true,
+            },
+          },
+          tags: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+      return c.json(game);
+    } catch (error) {
+      return c.json({ message: "Game not found" }, 404);
+    }
+  }
+);
+
+app.delete("/games/:slug", async (c) => {
+  const slug = c.req.param("slug");
+
+  try {
+    const game = await db.game.delete({
+      where: { slug: slug },
+    });
+    return c.json({ message: "Game successfully deleted" });
+  } catch (error) {
     return c.json({ message: "Game not found" }, 404);
   }
-
-  dataGames.splice(gameIndex, 1);
-  return c.json({ message: "Game deleted successfully" }, 200);
 });
 
 export default app;
