@@ -25,8 +25,9 @@ model Game {
   price       Decimal  @db.Money
   description String?  @db.VarChar(1000)
   releaseDate DateTime
-  imageUrl    String?  @db.VarChar(255)
   rating      Float
+
+  image       Image?
 
   developers Developer[]
   publishers Publisher[]
@@ -40,8 +41,8 @@ model Game {
 
 model Developer {
   id    String @id @default(cuid())
-  slug  String @unique // nusantara-studio-1a2b3c
-  name  String // Nusantara Studio
+  slug  String @unique
+  name  String 
   games Game[]
 }
 
@@ -71,4 +72,13 @@ model Tag {
   slug  String @unique
   name  String
   games Game[]
+}
+
+model Image {
+  id        String   @id @default(cuid())
+  url       String   @db.VarChar(255)
+  game      Game     @relation(fields: [gameId], references: [id])
+  gameId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
