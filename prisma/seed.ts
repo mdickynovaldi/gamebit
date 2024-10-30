@@ -29,68 +29,56 @@ async function main() {
     });
   }
 
-  // Seed image
-  for (const image of dataImages) {
-    await prisma.image.upsert({
-      where: { id: image.id },
-      update: {},
-      create: {
-        ...image,
-        gameId: image.gameId,
-      },
+  // Seed tags
+  for (const tag of dataTags) {
+    const newTag = await prisma.tag.upsert({
+      where: { slug: tag.slug },
+      update: tag,
+      create: tag,
     });
 
-    // Seed tags
-    for (const tag of dataTags) {
-      const newTag = await prisma.tag.upsert({
-        where: { slug: tag.slug },
-        update: tag,
-        create: tag,
-      });
-
-      console.log(`✅ Tag: ${newTag.name}`);
-    }
-
-    // Seed genres
-    for (const genre of dataGenres) {
-      const newGenre = await prisma.genre.upsert({
-        where: { slug: genre.slug },
-        update: genre,
-        create: genre,
-      });
-
-      console.log(`✅ Genre: ${newGenre.name}`);
-    }
-
-    // Seed platforms
-    for (const platform of dataPlatforms) {
-      const newPlatform = await prisma.platform.upsert({
-        where: { slug: platform.slug },
-        update: platform,
-        create: platform,
-      });
-
-      console.log(`✅ Platform: ${newPlatform.name}`);
-    }
-
-    // Seed games
-    for (const game of dataGames) {
-      const newGame = await prisma.game.upsert({
-        where: { slug: game.slug },
-        update: game,
-        create: game,
-      });
-
-      console.log(`✅ Game: ${newGame.name}`);
-    }
+    console.log(`✅ Tag: ${newTag.name}`);
   }
 
-  main()
-    .catch((e) => {
-      console.error(e);
-      process.exit(1);
-    })
-    .finally(async () => {
-      await prisma.$disconnect();
+  // Seed genres
+  for (const genre of dataGenres) {
+    const newGenre = await prisma.genre.upsert({
+      where: { slug: genre.slug },
+      update: genre,
+      create: genre,
     });
+
+    console.log(`✅ Genre: ${newGenre.name}`);
+  }
+
+  // Seed platforms
+  for (const platform of dataPlatforms) {
+    const newPlatform = await prisma.platform.upsert({
+      where: { slug: platform.slug },
+      update: platform,
+      create: platform,
+    });
+
+    console.log(`✅ Platform: ${newPlatform.name}`);
+  }
+
+  // Seed games
+  for (const game of dataGames) {
+    const newGame = await prisma.game.upsert({
+      where: { slug: game.slug },
+      update: game,
+      create: game,
+    });
+
+    console.log(`✅ Game: ${newGame.name}`);
+  }
 }
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

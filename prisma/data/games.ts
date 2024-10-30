@@ -29,11 +29,6 @@ export const dataGames: GameCreateInput[] = [
     description:
       "Spider-Man is an action-adventure game that allows players to explore New York City as Peter Parker, also known as Spider-Man. With smooth web-swinging mechanics and dynamic combat, players will face various notorious villains from the Marvel Universe while saving the city from major threats.",
     releaseDate: new Date("2021-01-01"),
-    image: {
-      connect: {
-        id: "1",
-      },
-    },
     rating: 4.5,
     platforms: {
       connect: [
@@ -63,11 +58,6 @@ export const dataGames: GameCreateInput[] = [
     description:
       "Grand Theft Auto V is an action-adventure game that allows players to explore the open world of Los Santos and Blaine County. With a focus on crime and driving, players can engage in various activities such as heists, races, and street battles while interacting with other characters and completing missions.",
     releaseDate: new Date("2021-01-02"),
-    image: {
-      connect: {
-        id: "2",
-      },
-    },
     rating: 4.5,
     platforms: {
       connect: [{ slug: "playstation-4" }, { slug: "xbox-one" }],
@@ -93,11 +83,6 @@ export const dataGames: GameCreateInput[] = [
     description:
       "The Last of Us is an action-adventure game that follows the journey of Joel and Ellie as they navigate through a post-apocalyptic world filled with dangerous creatures and other survivors. With a focus on survival and storytelling, players will encounter various challenges and make difficult decisions while trying to protect Ellie from the harsh realities of the world.",
     releaseDate: new Date("2021-01-03"),
-    image: {
-      connect: {
-        id: "3",
-      },
-    },
     rating: 4.5,
     platforms: {
       connect: [
