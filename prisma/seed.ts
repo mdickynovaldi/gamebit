@@ -30,14 +30,13 @@ async function main() {
   }
 
   // Seed image
-  // Seed image
   for (const image of dataImages) {
     await prisma.image.upsert({
       where: { id: image.id },
       update: {},
       create: {
         ...image,
-        gameId: image.gameId, // pastikan gameId ini valid
+        gameId: image.gameId,
       },
     });
 

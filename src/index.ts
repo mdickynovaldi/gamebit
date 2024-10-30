@@ -23,6 +23,19 @@ app.get("/", (c) => {
 app.get("/games", async (c) => {
   const games = await db.game.findMany({
     include: {
+      image: true,
+      developers: {
+        select: {
+          slug: true,
+          name: true,
+        },
+      },
+      publishers: {
+        select: {
+          slug: true,
+          name: true,
+        },
+      },
       platforms: {
         select: {
           slug: true,
