@@ -1,13 +1,10 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import slugify from "slugify";
-import { z } from "zod";
 
 import { db } from "./db";
-import {
-  GameCreateInputSchema,
-  GameUpdateInputSchema,
-} from "../prisma/zod-prisma-types";
+import { GameCreateInputSchema } from "../prisma/zod-prisma-types";
+import { GameBodySchema, GameParamSchema } from "../prisma/data/games";
+import { createSlug } from "./utils/string";
 
 const app = new Hono();
 
@@ -64,22 +61,9 @@ app.get("/games/:slug", async (c) => {
   const game = await db.game.findUnique({
     where: { slug: slug },
     include: {
-      platforms: {
-        select: {
-          slug: true,
-          name: true,
-        },
-      },
-      genres: {
-        select: {
-          name: true,
-        },
-      },
-      tags: {
-        select: {
-          name: true,
-        },
-      },
+      platforms: { select: { slug: true, name: true } },
+      genres: { select: { name: true } },
+      tags: { select: { name: true } },
     },
   });
 
@@ -87,6 +71,39 @@ app.get("/games/:slug", async (c) => {
 
   return c.json(game);
 });
+
+app.put(
+  "/games/:slug",
+  zValidator("param", GameParamSchema),
+  zValidator("json", GameBodySchema),
+  async (c) => {
+    const { slug } = c.req.valid("param");
+    const body = c.req.valid("json");
+
+    try {
+      const game = await db.game.update({
+        where: { slug: slug },
+        data: {
+          ...body,
+          slug: body.name ? createSlug(body.name) : undefined,
+        },
+        include: {
+          developers: { select: { slug: true, name: true } },
+          publishers: { select: { slug: true, name: true } },
+          image: true,
+          platforms: { select: { slug: true, name: true } },
+          genres: { select: { name: true } },
+          tags: { select: { name: true } },
+        },
+      });
+
+      return c.json(game);
+    } catch (error) {
+      console.error("Error updating game:", error);
+      return c.json({ message: "Game not found", slug }, 404);
+    }
+  }
+);
 
 app.post("/games", zValidator("json", GameCreateInputSchema), async (c) => {
   try {
@@ -133,59 +150,6 @@ app.post("/games", zValidator("json", GameCreateInputSchema), async (c) => {
     return c.json({ message: "Internal server error" }, 500);
   }
 });
-
-app.put(
-  "/games/:slug",
-  zValidator("param", z.object({ slug: z.string() })),
-  zValidator("json", GameCreateInputSchema),
-  async (c) => {
-    try {
-      const { slug } = c.req.valid("param");
-      const body = c.req.valid("json");
-
-      // const game = await db.game.update({
-      //   where: { slug: slug },
-      //   data: body,
-      //   include: {
-      //     developers: {
-      //       select: {
-      //         slug: true,
-      //         name: true,
-      //       },
-      //     },
-      //     publishers: {
-      //       select: {
-      //         slug: true,
-      //         name: true,
-      //       },
-      //     },
-      //     image: true,
-      //     platforms: {
-      //       select: {
-      //         slug: true,
-      //         name: true,
-      //       },
-      //     },
-      //     genres: {
-      //       select: {
-      //         name: true,
-      //       },
-      //     },
-      //     tags: {
-      //       select: {
-      //         name: true,
-      //       },
-      //     },
-      //   },
-      // });
-
-      return c.json(game);
-    } catch (error) {
-      console.error("Error updating game:", error);
-      return c.json({ message: "Game not found" }, 404);
-    }
-  }
-);
 
 app.delete("/games/:slug", async (c) => {
   const slug = c.req.param("slug");

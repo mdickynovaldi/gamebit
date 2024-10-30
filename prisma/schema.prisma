@@ -27,7 +27,7 @@ model Game {
   releaseDate DateTime
   rating      Float
 
-  image       Image?
+  image Image?
 
   developers Developer[]
   publishers Publisher[]
@@ -42,7 +42,7 @@ model Game {
 model Developer {
   id    String @id @default(cuid())
   slug  String @unique
-  name  String 
+  name  String
   games Game[]
 }
 

@@ -6,6 +6,21 @@ import { GameCreateInputSchema } from "../zod-prisma-types";
 // export type Game = z.infer<typeof GameSchema>;
 export type GameCreateInput = z.infer<typeof GameCreateInputSchema>;
 
+export const GameParamSchema = z.object({ slug: z.string() });
+
+export const GameBodySchema = z
+  .object({
+    slug: z.string(),
+    name: z.string(),
+    price: z.number(),
+    description: z.string(),
+    releaseDate: z.coerce.date(),
+    rating: z.number(),
+    createdAt: z.coerce.date(),
+    updatedAt: z.coerce.date(),
+  })
+  .partial();
+
 export const dataGames: GameCreateInput[] = [
   {
     slug: "spider-man",
