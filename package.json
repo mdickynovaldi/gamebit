@@ -18,6 +18,7 @@
     "@hono/zod-openapi": "^0.16.4",
     "@hono/zod-validator": "^0.4.1",
     "@prisma/client": "^5.22.0",
+    "@scalar/hono-api-reference": "^0.5.158",
     "date-fns": "^4.1.0",
     "decimal.js": "^10.4.3",
     "hono": "^4.6.9",

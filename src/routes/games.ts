@@ -1,49 +1,41 @@
 import { zValidator } from "@hono/zod-validator";
-import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
 import { db } from "../db";
-import { GameCreateInputSchema } from "../../prisma/zod-prisma-types";
+import {
+  GameCreateInputSchema,
+  GameSchema,
+} from "../../prisma/zod-prisma-types";
 import { GameBodySchema, GameParamSchema } from "../../prisma/data/games";
 import { createSlug } from "../utils/string";
 
 export const gamesRoute = new OpenAPIHono();
 
-gamesRoute.get("/", async (c) => {
-  const games = await db.game.findMany({
-    include: {
-      image: true,
-      developers: {
-        select: {
-          slug: true,
-          name: true,
-        },
-      },
-      publishers: {
-        select: {
-          slug: true,
-          name: true,
-        },
-      },
-      platforms: {
-        select: {
-          slug: true,
-          name: true,
-        },
-      },
-      genres: {
-        select: {
-          name: true,
-        },
-      },
-      tags: {
-        select: {
-          name: true,
-        },
+gamesRoute.openapi(
+  createRoute({
+    method: "get",
+    path: "/",
+    responses: {
+      200: {
+        description: "Retrieve all games",
+        content: { "application/json": { schema: z.array(GameSchema) } },
       },
     },
-  });
-  return c.json(games);
-});
+  }),
+  async (c) => {
+    const games = await db.game.findMany({
+      include: {
+        image: true,
+        developers: { select: { slug: true, name: true } },
+        publishers: { select: { slug: true, name: true } },
+        platforms: { select: { slug: true, name: true } },
+        genres: { select: { name: true } },
+        tags: { select: { name: true } },
+      },
+    });
+    return c.json(games);
+  }
+);
 
 gamesRoute.get("/:slug", async (c) => {
   const slug = c.req.param("slug");
