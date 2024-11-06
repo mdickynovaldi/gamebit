@@ -3,7 +3,6 @@ import Decimal from "decimal.js";
 
 import { GameCreateInputSchema } from "../zod-prisma-types";
 
-// export type Game = z.infer<typeof GameSchema>;
 export type GameCreateInput = z.infer<typeof GameCreateInputSchema>;
 
 export const GameParamSchema = z.object({ slug: z.string() });
